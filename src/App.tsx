@@ -92,6 +92,9 @@ export default function App() {
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
@@ -340,8 +343,6 @@ export default function App() {
       alert("导出项目失败！");
     }
   };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const importProject = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -770,8 +771,6 @@ export default function App() {
     if (currentPage.length > 0) pages.push(currentPage);
     return pages;
   };
-
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const requestResetProject = () => {
     setShowResetConfirm(true);
