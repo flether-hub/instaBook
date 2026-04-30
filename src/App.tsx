@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw, Activity } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
-import { generateBookOutline, generateChapterContent, testGeminiConnection, BookOutline } from './lib/gemini';
+import { generateBookOutline, generateChapterContent, testZhipuConnection, BookOutline } from './lib/zhipu';
 import { generateEPUB } from './lib/epub';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, TableOfContents, Footer, Header, PageNumber, convertMillimetersToTwip, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
@@ -63,7 +63,7 @@ export default function App() {
   const testApiKey = async () => {
     setIsTestingApi(true);
     try {
-      const result = await testGeminiConnection();
+      const result = await testZhipuConnection();
       if (result.ok) {
         alert("✅ API Key 测试成功！连接正常，可以使用。");
       } else {
@@ -158,16 +158,14 @@ export default function App() {
           if (stopRef.current) break;
           console.error(`Error generating chapter ${i + 1} (Retries left: ${retries - 1}):`, error);
           
-          const isRateLimit = error?.message?.includes('quota') || 
-                              error?.message?.includes('429') || 
-                              error?.message?.includes('RESOURCE_EXHAUSTED') ||
-                              error?.status === 429 ||
-                              error?.status === 'RESOURCE_EXHAUSTED';
+          const errorMsg = error?.message?.toLowerCase() || '';
+          // Retry on almost all backend errors (500, 502, 504, 429, timeouts)
+          const isRetryable = !errorMsg.includes('api key') && !errorMsg.includes('unauthorized');
 
-          if (isRateLimit) {
+          if (isRetryable) {
             retries--;
             if (retries > 0) {
-              console.log(`Rate limited. Waiting ${backoffMs / 1000} seconds before retrying...`);
+              console.log(`Error encountered. Waiting ${backoffMs / 1000} seconds before retrying...`);
               await sleep(backoffMs);
               backoffMs *= 2; 
             }
@@ -176,9 +174,11 @@ export default function App() {
           }
 
           if (retries === 0 && !success && !stopRef.current) {
-            setChaptersContent((prev) => ({ ...prev, [i]: "本章生成失败，请点击【续写完成】重试该章节。（原因：API调用频率超限或网络错误）" }));
-            // Don't mark as completed so it can be resumed
-            success = true; 
+            setChaptersContent((prev) => ({ ...prev, [i]: `本章生成失败，请点击【续写完成】重试该章节。\n错误详情：${error?.message || '未知错误'}` }));
+            // Stop generating further chapters to prevent cascading failures
+            setStopRequested(true);
+            stopRef.current = true;
+            break;
           }
         }
       }

@@ -3,7 +3,7 @@ export const onRequestPost = async (context: any) => {
   const { request, env } = context;
   
   // 从 Cloudflare 环境变量中获取私密的 API Key
-  const apiKey = env.ZHIPU_API_KEY;
+  const apiKey = env.ZHIPU_API_KEY || env.VITE_ZHIPU_API_KEY;
   
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "Server configuration error: ZHIPU_API_KEY not found" }), {

@@ -1,6 +1,6 @@
 export async function onRequestGet({ env }: any) {
   try {
-    const apiKey = env.ZHIPU_API_KEY;
+    const apiKey = env.ZHIPU_API_KEY || env.VITE_ZHIPU_API_KEY;
     if (!apiKey) {
       return new Response(JSON.stringify({ ok: false, error: "API Key not configured in environment variables." }), { status: 500 });
     }

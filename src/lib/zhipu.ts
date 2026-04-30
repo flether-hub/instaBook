@@ -42,15 +42,21 @@ async function callGLM(prompt: string, isJson: boolean = false, onProgress?: (te
   let response: Response;
 
   // 所有的API调用都走后台的function
-  response = await fetch('/api/gemini', {
+  response = await fetch('/api/zhipu', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: "Unknown backend error" }));
-    const errorMsg = typeof err.error === 'object' ? err.error.message : (err.error || `Server Error: ${response.status}`);
+    const errorText = await response.text();
+    let errorMsg = `HTTP ${response.status}: ${errorText}`;
+    try {
+      const errJson = JSON.parse(errorText);
+      errorMsg = errJson.error?.message || errJson.error || errorMsg;
+    } catch (e) {
+      // not json, use text
+    }
     throw new Error(errorMsg);
   }
 
@@ -127,7 +133,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
   return parsed as BookOutline;
 };
 
-export const testGeminiConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
+export const testZhipuConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
   // 生产环境和开发环境测试全都通过后端 Functions 进行，保护 API Key 不在前台暴露
   try {
     const res = await fetch('/api/test-key');
