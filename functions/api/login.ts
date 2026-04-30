@@ -1,8 +1,9 @@
 export async function onRequestPost({ request, env }: any) {
   try {
-    const body = await request.json();
+    const body: any = await request.json();
     const { username, password } = body;
     
+    // Cloudflare Pages Environment variables are kept in 'env'
     const adminPassword = env.ADMIN_PASSWORD;
 
     if (!adminPassword) {

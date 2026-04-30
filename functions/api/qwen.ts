@@ -9,7 +9,7 @@ export async function onRequestPost({ request, env }: any) {
   }
 
   try {
-    const body = await request.json();
+    const body: any = await request.json();
     const { stream, ...payload } = body;
 
     const response = await fetch(`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`, {

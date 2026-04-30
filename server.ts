@@ -19,14 +19,11 @@ async function startServer() {
       }
 
       const payload = {
-        model: "qwen-plus", // Qwen 3.6 Plus is typically qwen-plus or qwen-max, or specifically user requested qwen3.6-plus. We'll use user's string here.
+        model: "qwen-max",
         messages: [{ role: "user", content: "Hello" }],
         max_tokens: 10,
         temperature: 1.0
       };
-      
-      // We will match user requested model
-      payload.model = "qwen3.6-plus";
 
       const response = await fetch(`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`, {
         method: "POST",
@@ -95,6 +92,7 @@ async function startServer() {
 
       if (response.body) {
         // Read response body as stream and pipe to res
+        // @ts-ignore
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         

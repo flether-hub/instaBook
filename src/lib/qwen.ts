@@ -27,7 +27,7 @@ export interface BookOutline {
  */
 async function callQwen(prompt: string, isJson: boolean = false, onProgress?: (text: string) => void): Promise<string> {
   const payload: any = {
-    model: "qwen3.6-plus",
+    model: "qwen-max", // Usually safer and provides best results, but you can change back to qwen3.6-plus if you have explicit access
     messages: [{ role: "user", content: prompt }],
     max_tokens: 8192,
     temperature: 1.0,
@@ -101,22 +101,23 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
   const prompt = `你是一位专业的图书策划编辑和畅销书作家。请根据以下主题/书名：“${topicOrTitle}” 策划一本高质量的书籍大纲。
 风格要求：${writingStyle}。
 作者：${authorName || "虚构笔名"}。
-请规划出 ${chapterCount} 个章节，并返回 JSON：
+请严格规划出 ${chapterCount} 个章节，并为每一章提供详细的剧情/内容摘要。注意：章节标题请提供简洁、有深意的纯标题，不要包含“第x章”或“Chapter x”等字样。
+请返回 JSON 格式：
 {
   "title": "主标题",
   "subtitle": "副标题",
   "author": "作者名",
-  "isbn": "13位ISBN",
-  "price": "定价",
-  "publisher": "出版社",
-  "introduction": "引言全文",
-  "recommendations": [{ "recommender": "姓名", "recommenderTitle": "头衔", "content": "正文" }],
-  "chapters": [{ "title": "标题", "summary": "摘要" }]
+  "isbn": "13位ISBN编号",
+  "price": "定价（例如：68.00元）",
+  "publisher": "出版社名称",
+  "introduction": "引言全文内容",
+  "recommendations": [{ "recommender": "姓名", "recommenderTitle": "头衔/职位", "content": "几段推荐序正文" }],
+  "chapters": [{ "title": "章节标题", "summary": "本章摘要或说明" }]
 }`;
 
   let jsonStr = await callQwen(prompt, true, onProgress);
   
-  // 提取 JSON：尝试匹配 ```json ... ``` 块，如果找不到再尝试找第一个 { 和最后一个 }
+  // 提取 JSON：尝试匹配 \`\`\`json ... \`\`\` 块，如果找不到再尝试找第一个 { 和最后一个 }
   const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (jsonMatch && jsonMatch[1]) {
     jsonStr = jsonMatch[1];
@@ -133,7 +134,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
     parsed = JSON.parse(jsonStr.trim() || "{}");
   } catch (e) {
     console.error("Failed to parse AI JSON:", jsonStr);
-    throw new Error("模型返回的数据格式无法解析为 JSON，请重试。");
+    throw new Error("模型返回的数据格式无法解析为 JSON，请重试。\\n内容：" + jsonStr);
   }
 
   // Ensure arrays exist
@@ -144,7 +145,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
 };
 
 export const testQwenConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
-  // 生产环境和开发环境测试全都通过后端 Functions 进行，保护 API Key 不在前台暴露
+  // 生产环境和开发环境测试全都通过后端 Functions/Express 进行，保护 API Key 不在前台暴露
   try {
     const res = await fetch('/api/test-key');
     const data = await res.json();
@@ -159,11 +160,15 @@ export const testQwenConnection = async (): Promise<{ ok: boolean, message?: str
 };
 
 export const generateChapterContent = async (bookTitle: string, chapterTitle: string, chapterSummary: string, writingStyle: string, onProgress?: (text: string) => void): Promise<string> => {
-  const prompt = `撰写《${bookTitle}》的章节：${chapterTitle}。
-风格：${writingStyle}。
-摘要：${chapterSummary}。
-要求：内容详实，不少于 1500 字，纯文本返回。`;
+  const prompt = `撰写图书《${bookTitle}》的其中一个章节：
+章节名称：${chapterTitle}
+章节大纲摘要：${chapterSummary}
+书籍整体风格：${writingStyle}
+
+核心要求：
+1. 请不要输出任何“以下是为您撰写的章节”等客套话，直接开始输出你的正文！
+2. 正文必须详实丰富，至少在一两千字以上，要有深度有细节。
+3. 请使用纯文本（不要用Markdown格式输出，直接输出段落）。段落之间用空行隔开。`;
 
   return await callQwen(prompt, false, onProgress);
 };
-

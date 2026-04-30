@@ -2,11 +2,11 @@ export async function onRequestGet({ env }: any) {
   try {
     const apiKey = env.QWEN_API_KEY || env.VITE_QWEN_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ ok: false, error: "API Key not configured in environment variables." }), { status: 500 });
+      return new Response(JSON.stringify({ ok: false, error: "API Key not configured in environment variables." }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 
     const payload = {
-      model: "qwen3.6-plus",
+      model: "qwen-max",
       messages: [{ role: "user", content: "Hello" }],
       max_tokens: 10,
       temperature: 1.0
@@ -23,7 +23,7 @@ export async function onRequestGet({ env }: any) {
 
     if (!response.ok) {
       const err = await response.text();
-      return new Response(JSON.stringify({ ok: false, error: err }), { status: response.status });
+      return new Response(JSON.stringify({ ok: false, error: err }), { status: response.status, headers: { "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ ok: true, message: "API Key is valid and working." }), { status: 200, headers: { "Content-Type": "application/json" } });
