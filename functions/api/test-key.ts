@@ -2,7 +2,7 @@ export async function onRequestGet({ env }: any) {
   try {
     const apiKey = env.QWEN_API_KEY || env.VITE_QWEN_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ ok: false, error: "API Key not configured in environment variables." }), { status: 500, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ ok: false, error: "API Key未配置。如果在 Cloudflare 后台刚添加变量，必须在“部署”历史中点击【重试部署】重新构建，新变量才会生效！" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 
     const payload = {
