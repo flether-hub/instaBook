@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw } from 'lucide-react';
+import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw, Activity } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
-import { generateBookOutline, generateChapterContent, BookOutline } from './lib/gemini';
+import { generateBookOutline, generateChapterContent, testGeminiConnection, BookOutline } from './lib/gemini';
 import { generateEPUB } from './lib/epub';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, TableOfContents, Footer, Header, PageNumber, convertMillimetersToTwip, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
@@ -57,6 +57,24 @@ export default function App() {
     { name: '辛辣讽刺', value: '犀利、睿智、略带讽刺感、直指核心' },
     { name: '热血励志', value: '充满激情、感召力强、催人奋进' }
   ];
+
+  const [isTestingApi, setIsTestingApi] = useState(false);
+
+  const testApiKey = async () => {
+    setIsTestingApi(true);
+    try {
+      const result = await testGeminiConnection();
+      if (result.ok) {
+        alert("✅ API Key 测试成功！连接正常，可以使用。");
+      } else {
+        alert(`❌ API Key 测试失败或遇到额度限制: \n\n${result.error || result.message}`);
+      }
+    } catch (e: any) {
+      alert(`❌ 测试请求失败，网络异常或服务未部署。\n${e.message}`);
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
 
   // Function to kick off the generation process
   const startGeneration = async () => {
@@ -756,10 +774,14 @@ export default function App() {
             <div className="flex flex-col md:flex-row gap-5">
               <div className="flex-1"><label className="block text-sm font-medium text-stone-700 mb-1">作者署名</label><input type="text" className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" placeholder="请输入笔名..." value={authorName} onChange={(e) => setAuthorName(e.target.value)} disabled={isGeneratingOutline} /></div>
               <div className="w-full md:w-1/3"><label className="block text-sm font-medium text-stone-700 mb-1">文笔风格</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={writingStyle} onChange={(e) => setWritingStyle(e.target.value)} disabled={isGeneratingOutline}>{styles.map((s) => (<option key={s.name} value={s.value}>{s.name}</option>))}</select></div>
-              <div className="w-full md:w-1/4"><label className="block text-sm font-medium text-stone-700 mb-1">总字数</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={wordCount} onChange={(e) => setWordCount(Number(e.target.value))} disabled={isGeneratingOutline}><option value={10000}>短篇 (~1万字)</option><option value={30000}>中篇 (~3万字)</option><option value={50000}>长篇 (~5万字)</option><option value={100000}>巨著 (~10万字)</option></select></div>
+              <div className="w-full md:w-1/4"><label className="block text-sm font-medium text-stone-700 mb-1">总字数</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={wordCount} onChange={(e) => setWordCount(Number(e.target.value))} disabled={isGeneratingOutline}><option value={2000}>极短篇 (~2千字)</option><option value={10000}>短篇 (~1万字)</option><option value={30000}>中篇 (~3万字)</option><option value={50000}>长篇 (~5万字)</option><option value={100000}>巨著 (~10万字)</option></select></div>
             </div>
-            <button onClick={startGeneration} disabled={!topic.trim() || isGeneratingOutline} className="mt-2 w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="w-5 h-5" />开始撰写成书</button>
-            {isInterrupted && (<button onClick={resumeGeneration} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-3"><Wand2 className="w-5 h-5" />检测到未完成书籍：继续续写</button>)}
+            
+            <div className="flex gap-3 mt-2">
+              <button onClick={startGeneration} disabled={!topic.trim() || isGeneratingOutline} className="flex-grow py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="w-5 h-5" />开始撰写成书</button>
+              <button onClick={testApiKey} disabled={isTestingApi} className="px-6 py-4 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"><Activity className="w-5 h-5" />连接测试</button>
+            </div>
+            {isInterrupted && (<button onClick={resumeGeneration} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-3 mt-3"><Wand2 className="w-5 h-5" />检测到未完成书籍：继续续写</button>)}
           </div>
         </div>
       )}

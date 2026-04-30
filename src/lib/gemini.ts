@@ -37,7 +37,7 @@ async function callGemini(prompt: string, isJson: boolean = false, onProgress?: 
     const ai = new GoogleGenAI({ apiKey: key as string });
 
     const result = await ai.models.generateContentStream({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-1.5-pro",
       contents: prompt,
       config: isJson ? { responseMimeType: "application/json" } : undefined
     });
@@ -140,6 +140,39 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
   if (!parsed.recommendations) parsed.recommendations = [];
 
   return parsed as BookOutline;
+};
+
+export const testGeminiConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
+  const envGeminiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+  const isPreview = typeof window !== 'undefined' && (window.location.hostname.includes('ais-dev-') || window.location.hostname.includes('ais-pre-') || window.location.hostname.includes('localhost'));
+  
+  if (isPreview || envGeminiKey) {
+    try {
+      const key = envGeminiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : null) || 'preview-key';
+      const ai = new GoogleGenAI({ apiKey: key as string });
+      await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: "Hello",
+        config: { maxOutputTokens: 5 }
+      });
+      return { ok: true, message: "API Key is valid and working (Dev Env)." };
+    } catch (e: any) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  // 生产环境测试
+  try {
+    const res = await fetch('/api/test-key');
+    const data = await res.json();
+    if (!res.ok) {
+      const errorMsg = typeof data.error === 'object' ? data.error.error?.message || JSON.stringify(data.error) : data.error;
+      return { ok: false, error: errorMsg };
+    }
+    return data;
+  } catch (e: any) {
+    return { ok: false, error: e.message };
+  }
 };
 
 export const generateChapterContent = async (bookTitle: string, chapterTitle: string, chapterSummary: string, writingStyle: string, onProgress?: (text: string) => void): Promise<string> => {
