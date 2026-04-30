@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Settings, Upload, Archive } from 'lucide-react';
+import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Settings, Upload, Archive, RotateCcw } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
 import { generateBookOutline, generateChapterContent, BookOutline } from './lib/gemini';
@@ -676,6 +676,16 @@ export default function App() {
     return pages;
   };
 
+  const resetProject = () => {
+    if (window.confirm("确定要重新开始吗？这会清除当前页面的所有进度和内容。您可以先导出当前项目再重写。")) {
+      stopGeneration();
+      setOutline(null);
+      setChaptersContent({});
+      setCompletedChapters([]);
+      setGeneratingChapterIdx(null);
+    }
+  };
+
   const resumeGeneration = async () => {
     if (!outline) return;
     stopRef.current = false;
@@ -752,6 +762,7 @@ export default function App() {
             <button onClick={() => setShowSettingsModal(true)} className="p-2 md:px-4 md:py-2 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center gap-2"><Settings className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">设置</span></button>
             {outline && (
               <>
+                <button onClick={resetProject} className="p-2 md:px-4 md:py-2 text-red-600 hover:bg-red-50 bg-red-50/50 rounded-full transition-colors flex items-center gap-2"><RotateCcw className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">重新书写</span></button>
                 {isInterrupted && (
                   <button onClick={resumeGeneration} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-medium transition-colors shadow-sm animate-pulse"><Wand2 className="w-4 h-4" />续写完成</button>
                 )}
