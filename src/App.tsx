@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Settings, Upload, Archive, RotateCcw } from 'lucide-react';
+import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
 import { generateBookOutline, generateChapterContent, BookOutline } from './lib/gemini';
@@ -23,12 +23,6 @@ export default function App() {
   const [completedChapters, setCompletedChapters] = useState<number[]>([]);
   const [stopRequested, setStopRequested] = useState(false);
   const stopRef = useRef(false);
-
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-
-  const saveSettings = () => {
-    setShowSettingsModal(false);
-  };
 
   // Load saved book from localStorage on mount
   useEffect(() => {
@@ -728,31 +722,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900 font-sans selection:bg-stone-300 selection:text-stone-900 pb-24">
-      {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-6 no-print">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl md:text-2xl font-bold mb-4">关于</h3>
-            
-            <div className="mb-6 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-start gap-3">
-              <Wand2 className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-              <div className="text-sm text-indigo-900 leading-relaxed">
-                <strong>服务端 API Key 保护</strong>
-                <p className="mt-1 text-indigo-700">您的 Google Gemini API Key 现在通过 Cloudflare Pages Functions 在服务端安全调用。</p>
-                <p className="mt-2 text-indigo-700"><strong>对于使用者：</strong>完全不可见。普通访客仅与您的网站进行交互，API Key 不会在浏览器的网络请求或源代码中暴露。</p>
-              </div>
-            </div>
-
-            <div className="text-sm text-stone-600 space-y-2">
-              <p>当前模型：Gemini 1.5 Pro</p>
-              <p>为了获得最佳生成效果，建议在部署时配置 <code className="bg-stone-100 px-1 rounded text-stone-800">VITE_GEMINI_API_KEY</code>。</p>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-8">
-               <button onClick={() => setShowSettingsModal(false)} className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-colors shadow-sm w-full">关闭</button>
-            </div>
-          </div>
-        </div>
-      )}
       
       <header className="no-print bg-white border-b border-stone-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -763,7 +732,6 @@ export default function App() {
           <div className="flex items-center gap-2">
             <input type="file" accept=".zip" className="hidden" ref={fileInputRef} onChange={importProject} />
             <button onClick={() => fileInputRef.current?.click()} className="p-2 md:px-4 md:py-2 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center gap-2"><Upload className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">导入</span></button>
-            <button onClick={() => setShowSettingsModal(true)} className="p-2 md:px-4 md:py-2 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center gap-2"><Settings className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">设置</span></button>
             {outline && (
               <>
                 <button onClick={resetProject} className="p-2 md:px-4 md:py-2 text-red-600 hover:bg-red-50 bg-red-50/50 rounded-full transition-colors flex items-center gap-2"><RotateCcw className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">重新书写</span></button>
