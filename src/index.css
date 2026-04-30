@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "SimHei", "Heiti SC", "Noto Sans CJK SC", "Microsoft YaHei", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "SimSun", "Songti SC", "Noto Serif CJK SC", "STSong", "Crimson Pro", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+/* Realistic Book Page Preview Support */
+.book-page-preview {
+  background-color: #fcfbf8; /* warm paper color */
+  width: 100%;
+  max-width: 560px; /* Standard A5 width at screen scale */
+  min-height: 795px; /* Standard A5 height (560 / 0.704) */
+  margin: 0 auto 2rem auto;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.08), 
+    0 8px 10px -6px rgba(0, 0, 0, 0.08),
+    inset 16px 0 24px -16px rgba(0,0,0,0.06); /* book spine inner shadow */
+  padding: 75px 60px; /* ~15-20mm margins */
+  position: relative;
+  box-sizing: border-box;
+  color: #2c2a29;
+}
+
+/* Preview Header */
+.preview-header {
+  position: absolute;
+  top: 30px;
+  left: 60px;
+  right: 60px;
+  text-align: center;
+  border-bottom: 2px solid #888;
+  padding-bottom: 6px;
+  font-family: var(--font-sans);
+  color: #888;
+  font-size: 0.875rem;
+}
+
+/* Preview Footer (Page Numbers) */
+.preview-footer {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-serif);
+  color: #333;
+  font-size: 0.875rem;
+}
+
+@media print {
+  @page {
+    margin: 15mm 15mm 20mm 15mm !important;
+    size: 148mm 210mm;
+  }
+  
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background-color: white !important;
+  }
+
+  /* Reset layout for print */
+  .no-print {
+    display: none !important;
+  }
+
+  .printable-book {
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .book-page-preview {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+  }
+
+  .preview-header, .preview-footer {
+    display: none !important; /* Managed by print headers/footers */
+  }
+
+  .page-break {
+    break-before: page;
+    page-break-before: always;
+    display: block;
+  }
+  
+  .content-page {
+    page-break-before: always;
+  }
+
+  /* Footer for numbering */
+  .print-footer {
+    display: flex !important;
+    position: fixed;
+    bottom: 5mm;
+    left: 0;
+    right: 0;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 10pt;
+    border-top: 0.5pt solid #eee;
+    padding-top: 3mm;
+  }
+
+  .page-number::after {
+    content: "— " counter(page) " —";
+  }
+
+  /* Header for Book title and Author */
+  .print-header {
+    display: flex !important;
+    position: fixed;
+    top: 5mm;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    font-family: var(--font-serif);
+    font-size: 9pt;
+    font-style: italic;
+    color: #666;
+    border-bottom: 0.5pt solid #eee;
+    padding-bottom: 2mm;
+  }
+
+  /* Hide headers on cover */
+  .book-cover-page .print-header,
+  .book-cover-page .print-footer {
+    display: none !important;
+  }
+
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+}
+

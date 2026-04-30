@@ -1,0 +1,6 @@
+{
+  "name": "InstaBook Generator",
+  "description": "An AI-powered web app that generates complete, structured books from a title and allows downloading them as beautiful formatted PDFs ready for print.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

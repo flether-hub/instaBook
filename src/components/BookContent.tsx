@@ -1,0 +1,49 @@
+import React from 'react';
+
+interface BookContentProps {
+  content: string;
+}
+
+export function BookContent({ content }: BookContentProps) {
+  const paragraphs = content.split('\n\n').filter((p) => p.trim() !== '');
+
+  return (
+    <div className="font-serif text-[15px] leading-[1.8] text-justify px-1">
+      {paragraphs.map((para, idx) => {
+        // Handle basic markdown bolding if present
+        const processBolds = (text: string) => {
+          const parts = text.split(/\*\*(.*?)\*\*/g);
+          return parts.map((part, i) => (i % 2 === 1 ? <strong key={i} className="font-bold">{part}</strong> : part));
+        };
+
+        // If it looks like a heading (starts with #)
+        if (para.startsWith('#')) {
+          const level = para.match(/^#+/)?.[0].length || 1;
+          const cleanText = para.replace(/^#+\s*/, '');
+          const Tag = `h${Math.min(level + 1, 6)}` as any;
+          
+          let headingClass = "font-bold font-sans text-black ";
+          if (level === 1) { // ## Equivalent to Heading 2 in docx (since Chapter Title is Heading 1)
+            headingClass += "text-[1.25rem] mt-[1.5rem] mb-[0.75rem] text-center";
+          } else if (level === 2) { // ### Equivalent to Heading 3
+            headingClass += "text-[1.125rem] mt-[1.2rem] mb-[0.6rem] text-center";
+          } else {
+            headingClass += "text-[1rem] mt-[1rem] mb-[0.5rem] text-center";
+          }
+          
+          return React.createElement(
+            Tag,
+            { key: idx, className: headingClass },
+            processBolds(cleanText)
+          );
+        }
+
+        return (
+          <p key={idx} className="mb-[0.6em] indent-[2em]">
+            {processBolds(para)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
