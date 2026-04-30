@@ -2,7 +2,7 @@ export async function onRequestPost({ request, env }: any) {
   const apiKey = env.QWEN_API_KEY || env.VITE_QWEN_API_KEY;
   
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "Server configuration error: QWEN_API_KEY not found" }), {
+    return new Response(JSON.stringify({ error: "API Key未配置。请在 Cloudflare Pages 后台添加变量 QWEN_API_KEY 并重新部署。" }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
     });

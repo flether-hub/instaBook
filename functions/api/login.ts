@@ -7,7 +7,7 @@ export async function onRequestPost({ request, env }: any) {
     const adminPassword = env.ADMIN_PASSWORD;
 
     if (!adminPassword) {
-      return new Response(JSON.stringify({ ok: false, error: "系统未配置管理员密码" }), {
+      return new Response(JSON.stringify({ ok: false, error: "系统未配置管理员密码。请在 Cloudflare Pages 后台 (Settings -> Environment variables) 中添加变量 ADMIN_PASSWORD，然后重新部署生效。" }), {
         status: 500,
         headers: { "Content-Type": "application/json" }
       });
