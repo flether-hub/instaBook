@@ -683,6 +683,9 @@ export default function App() {
       setChaptersContent({});
       setCompletedChapters([]);
       setGeneratingChapterIdx(null);
+      localStorage.removeItem('instabook-outline');
+      localStorage.removeItem('instabook-chaptersContent');
+      localStorage.removeItem('instabook-completedChapters');
     }
   };
 
@@ -733,8 +736,9 @@ export default function App() {
             <div className="mb-6 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-start gap-3">
               <Wand2 className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
               <div className="text-sm text-indigo-900 leading-relaxed">
-                <strong>环境变量管理</strong>
-                <p className="mt-1 text-indigo-700">Google Gemini API Key 现在通过网站部署环境（如 Cloudflare Pages 环境变量）进行管理，无需在页面手动输入，更加安全。</p>
+                <strong>服务端 API Key 保护</strong>
+                <p className="mt-1 text-indigo-700">您的 Google Gemini API Key 现在通过 Cloudflare Pages Functions 在服务端安全调用。</p>
+                <p className="mt-2 text-indigo-700"><strong>对于使用者：</strong>完全不可见。普通访客仅与您的网站进行交互，API Key 不会在浏览器的网络请求或源代码中暴露。</p>
               </div>
             </div>
 

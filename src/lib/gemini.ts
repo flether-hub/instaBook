@@ -28,7 +28,7 @@ export interface BookOutline {
  * 支持直接调用 (Dev/Preview) 和 通过 Cloudflare Proxy 调用 (Production)
  */
 async function callGemini(prompt: string, isJson: boolean = false, onProgress?: (text: string) => void): Promise<string> {
-  const envGeminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const envGeminiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
   const isPreview = typeof window !== 'undefined' && (window.location.hostname.includes('ais-dev-') || window.location.hostname.includes('ais-pre-') || window.location.hostname.includes('localhost'));
   
   // 1. 在 AI Studio 预览环境或手动提供了公开 Key 时，直接从前端调用
@@ -66,7 +66,8 @@ async function callGemini(prompt: string, isJson: boolean = false, onProgress?: 
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({ error: "Unknown backend error" }));
-    throw new Error(err.error || `Server Error: ${response.status}`);
+    const errorMsg = typeof err.error === 'object' ? err.error.message : (err.error || `Server Error: ${response.status}`);
+    throw new Error(errorMsg);
   }
 
   // 解析流式响应 (SSE 解析)
@@ -81,7 +82,7 @@ async function callGemini(prompt: string, isJson: boolean = false, onProgress?: 
       if (done) break;
       
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\\n');
+      const lines = buffer.split('\n');
       buffer = lines.pop() || ""; // Keep the last incomplete line in buffer
 
       for (const line of lines) {

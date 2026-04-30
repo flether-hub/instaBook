@@ -17,7 +17,7 @@ export const onRequestPost = async (context) => {
     const { stream, ...payload } = body;
 
     // 转发请求到 Google Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:streamGenerateContent?alt=sse&key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:streamGenerateContent?alt=sse&key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,8 +25,19 @@ export const onRequestPost = async (context) => {
       body: JSON.stringify(payload)
     });
 
+    // 如果 Google API 返回错误，转发状态码和原样内容
+    if (!response.ok) {
+      return new Response(response.body, {
+        status: response.status,
+        headers: {
+          "Content-Type": response.headers.get("Content-Type") || "application/json",
+        },
+      });
+    }
+
     // 保持流式响应输出
     return new Response(response.body, {
+      status: response.status,
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
