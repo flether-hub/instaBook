@@ -104,7 +104,7 @@ export default function App() {
       console.error("Error generating outline:", error);
       let errorMessage = error?.message || String(error);
       if (errorMessage.includes("API key not valid") || errorMessage.includes("API_KEY_INVALID")) {
-        errorMessage = "API Key 无效。请检查部署环境中的环境变量（如 VITE_GEMINI_API_KEY）配置是否正确。";
+        errorMessage = "API Key 无效。请检查部署环境中的环境变量（ZHIPU_API_KEY）配置是否正确。";
       }
       alert(`生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
       setIsGeneratingOutline(false);

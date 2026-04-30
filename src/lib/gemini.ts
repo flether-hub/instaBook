@@ -1,5 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
-
 export interface ChapterDetails {
   title: string;
   summary: string;
@@ -27,38 +25,24 @@ export interface BookOutline {
  * 执行生成内容的通用函数
  * 支持直接调用 (Dev/Preview) 和 通过 Cloudflare Proxy 调用 (Production)
  */
-async function callGemini(prompt: string, isJson: boolean = false, onProgress?: (text: string) => void): Promise<string> {
-  const envGeminiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-  const isPreview = typeof window !== 'undefined' && (window.location.hostname.includes('ais-dev-') || window.location.hostname.includes('ais-pre-') || window.location.hostname.includes('localhost'));
+async function callGLM(prompt: string, isJson: boolean = false, onProgress?: (text: string) => void): Promise<string> {
+  const payload: any = {
+    model: "glm-4.7-flash",
+    messages: [{ role: "user", content: prompt }],
+    thinking: { type: "enabled" },
+    max_tokens: 65536,
+    temperature: 1.0,
+    stream: true,
+  };
   
-  // 1. 在 AI Studio 预览环境或手动提供了公开 Key 时，直接从前端调用
-  if (isPreview || envGeminiKey) {
-    const key = envGeminiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : null) || 'preview-key';
-    const ai = new GoogleGenAI({ apiKey: key as string });
-
-    const result = await ai.models.generateContentStream({
-      model: "gemini-1.5-pro",
-      contents: prompt,
-      config: isJson ? { responseMimeType: "application/json" } : undefined
-    });
-    
-    let fullText = "";
-    for await (const chunk of result) {
-      if (chunk.text) {
-        fullText += chunk.text;
-        onProgress?.(fullText);
-      }
-    }
-    return fullText;
+  if (isJson) {
+    payload.response_format = { type: "json_object" };
   }
 
-  // 2. 在 Cloudflare Pages 生产环境，通过后端 Functions 代理
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: isJson ? { responseMimeType: "application/json" } : undefined
-  };
+  let response: Response;
 
-  const response = await fetch('/api/gemini', {
+  // 所有的API调用都走后台的function
+  response = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -91,7 +75,8 @@ async function callGemini(prompt: string, isJson: boolean = false, onProgress?: 
           if (!dataStr || dataStr === '[DONE]') continue;
           try {
             const data = JSON.parse(dataStr);
-            const textPart = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            const delta = data.choices?.[0]?.delta;
+            const textPart = (delta?.reasoning_content || "") + (delta?.content || "");
             if (textPart) {
               fullText += textPart;
               onProgress?.(fullText);
@@ -124,7 +109,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
   "chapters": [{ "title": "标题", "summary": "摘要" }]
 }`;
 
-  let jsonStr = await callGemini(prompt, true, onProgress);
+  let jsonStr = await callGLM(prompt, true, onProgress);
   if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/```$/, '').trim();
   
   let parsed: Partial<BookOutline> = {};
@@ -143,25 +128,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
 };
 
 export const testGeminiConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
-  const envGeminiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-  const isPreview = typeof window !== 'undefined' && (window.location.hostname.includes('ais-dev-') || window.location.hostname.includes('ais-pre-') || window.location.hostname.includes('localhost'));
-  
-  if (isPreview || envGeminiKey) {
-    try {
-      const key = envGeminiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : null) || 'preview-key';
-      const ai = new GoogleGenAI({ apiKey: key as string });
-      await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: "Hello",
-        config: { maxOutputTokens: 5 }
-      });
-      return { ok: true, message: "API Key is valid and working (Dev Env)." };
-    } catch (e: any) {
-      return { ok: false, error: e.message };
-    }
-  }
-
-  // 生产环境测试
+  // 生产环境和开发环境测试全都通过后端 Functions 进行，保护 API Key 不在前台暴露
   try {
     const res = await fetch('/api/test-key');
     const data = await res.json();
@@ -181,5 +148,6 @@ export const generateChapterContent = async (bookTitle: string, chapterTitle: st
 摘要：${chapterSummary}。
 要求：内容详实，不少于 1500 字，纯文本返回。`;
 
-  return await callGemini(prompt, false, onProgress);
+  return await callGLM(prompt, false, onProgress);
 };
+
