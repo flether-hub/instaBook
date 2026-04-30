@@ -25,12 +25,11 @@ export interface BookOutline {
  * 执行生成内容的通用函数
  * 支持直接调用 (Dev/Preview) 和 通过 Cloudflare Proxy 调用 (Production)
  */
-async function callGLM(prompt: string, isJson: boolean = false, onProgress?: (text: string) => void): Promise<string> {
+async function callQwen(prompt: string, isJson: boolean = false, onProgress?: (text: string) => void): Promise<string> {
   const payload: any = {
-    model: "glm-4.7-flash",
+    model: "qwen3.6-plus",
     messages: [{ role: "user", content: prompt }],
-    thinking: { type: "enabled" },
-    max_tokens: 65536,
+    max_tokens: 8192,
     temperature: 1.0,
     stream: true,
   };
@@ -42,7 +41,7 @@ async function callGLM(prompt: string, isJson: boolean = false, onProgress?: (te
   let response: Response;
 
   // 所有的API调用都走后台的function
-  response = await fetch('/api/zhipu', {
+  response = await fetch('/api/qwen', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -115,7 +114,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
   "chapters": [{ "title": "标题", "summary": "摘要" }]
 }`;
 
-  let jsonStr = await callGLM(prompt, true, onProgress);
+  let jsonStr = await callQwen(prompt, true, onProgress);
   if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/```$/, '').trim();
   
   let parsed: Partial<BookOutline> = {};
@@ -133,7 +132,7 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
   return parsed as BookOutline;
 };
 
-export const testZhipuConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
+export const testQwenConnection = async (): Promise<{ ok: boolean, message?: string, error?: string }> => {
   // 生产环境和开发环境测试全都通过后端 Functions 进行，保护 API Key 不在前台暴露
   try {
     const res = await fetch('/api/test-key');
@@ -154,6 +153,6 @@ export const generateChapterContent = async (bookTitle: string, chapterTitle: st
 摘要：${chapterSummary}。
 要求：内容详实，不少于 1500 字，纯文本返回。`;
 
-  return await callGLM(prompt, false, onProgress);
+  return await callQwen(prompt, false, onProgress);
 };
 

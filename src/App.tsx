@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw, Activity } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
-import { generateBookOutline, generateChapterContent, testZhipuConnection, BookOutline } from './lib/zhipu';
+import { generateBookOutline, generateChapterContent, testQwenConnection, BookOutline } from './lib/qwen';
 import { generateEPUB } from './lib/epub';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, TableOfContents, Footer, Header, PageNumber, convertMillimetersToTwip, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
@@ -59,17 +59,21 @@ export default function App() {
   ];
 
   const [isTestingApi, setIsTestingApi] = useState(false);
+  const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const testApiKey = async () => {
     setIsTestingApi(true);
+    setApiTestStatus('idle');
     try {
-      const result = await testZhipuConnection();
+      const result = await testQwenConnection();
       if (result.ok) {
-        alert("✅ API Key 测试成功！连接正常，可以使用。");
+        setApiTestStatus('success');
       } else {
+        setApiTestStatus('error');
         alert(`❌ API Key 测试失败或遇到额度限制: \n\n${result.error || result.message}`);
       }
     } catch (e: any) {
+      setApiTestStatus('error');
       alert(`❌ 测试请求失败，网络异常或服务未部署。\n${e.message}`);
     } finally {
       setIsTestingApi(false);
@@ -104,7 +108,7 @@ export default function App() {
       console.error("Error generating outline:", error);
       let errorMessage = error?.message || String(error);
       if (errorMessage.includes("API key not valid") || errorMessage.includes("API_KEY_INVALID")) {
-        errorMessage = "API Key 无效。请检查部署环境中的环境变量（ZHIPU_API_KEY）配置是否正确。";
+        errorMessage = "API Key 无效。请检查部署环境中的环境变量（QWEN_API_KEY）配置是否正确。";
       }
       alert(`生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
       setIsGeneratingOutline(false);
@@ -688,17 +692,24 @@ export default function App() {
     return pages;
   };
 
-  const resetProject = () => {
-    if (window.confirm("确定要重新开始吗？这会清除当前页面的所有进度和内容。您可以先导出当前项目再重写。")) {
-      stopGeneration();
-      setOutline(null);
-      setChaptersContent({});
-      setCompletedChapters([]);
-      setGeneratingChapterIdx(null);
-      localStorage.removeItem('instabook-outline');
-      localStorage.removeItem('instabook-chaptersContent');
-      localStorage.removeItem('instabook-completedChapters');
-    }
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const requestResetProject = () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmResetProject = () => {
+    stopGeneration();
+    setOutline(null);
+    setChaptersContent({});
+    setCompletedChapters([]);
+    setGeneratingChapterIdx(null);
+    setTopic("");
+    setAuthorName("");
+    localStorage.removeItem('instabook-outline');
+    localStorage.removeItem('instabook-chaptersContent');
+    localStorage.removeItem('instabook-completedChapters');
+    setShowResetConfirm(false);
   };
 
   const resumeGeneration = async () => {
@@ -752,7 +763,7 @@ export default function App() {
             <button onClick={() => fileInputRef.current?.click()} className="p-2 md:px-4 md:py-2 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center gap-2"><Upload className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">导入</span></button>
             {outline && (
               <>
-                <button onClick={resetProject} className="p-2 md:px-4 md:py-2 text-red-600 hover:bg-red-50 bg-red-50/50 rounded-full transition-colors flex items-center gap-2"><RotateCcw className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">重新书写</span></button>
+                <button onClick={requestResetProject} className="p-2 md:px-4 md:py-2 text-red-600 hover:bg-red-50 bg-red-50/50 rounded-full transition-colors flex items-center gap-2"><RotateCcw className="w-4 h-4" /><span className="hidden md:inline font-medium text-sm">重新书写</span></button>
                 {isInterrupted && (
                   <button onClick={resumeGeneration} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-medium transition-colors shadow-sm animate-pulse"><Wand2 className="w-4 h-4" />续写完成</button>
                 )}
@@ -779,7 +790,26 @@ export default function App() {
             
             <div className="flex gap-3 mt-2">
               <button onClick={startGeneration} disabled={!topic.trim() || isGeneratingOutline} className="flex-grow py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"><Wand2 className="w-5 h-5" />开始撰写成书</button>
-              <button onClick={testApiKey} disabled={isTestingApi} className="px-6 py-4 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"><Activity className="w-5 h-5" />连接测试</button>
+              <button 
+                onClick={testApiKey} 
+                disabled={isTestingApi} 
+                className={`px-6 py-4 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 ${
+                  apiTestStatus === 'success' ? 'bg-green-100 hover:bg-green-200 text-green-700 border border-green-300' :
+                  apiTestStatus === 'error' ? 'bg-red-100 hover:bg-red-200 text-red-700 border border-red-300' :
+                  'bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300'
+                }`}
+              >
+                {isTestingApi ? <Loader2 className="w-5 h-5 animate-spin" /> : 
+                 apiTestStatus === 'success' ? <CheckCircle2 className="w-5 h-5" /> :
+                 apiTestStatus === 'error' ? <Activity className="w-5 h-5" /> : 
+                 <Activity className="w-5 h-5" />
+                }
+                {isTestingApi ? '测试中...' : 
+                 apiTestStatus === 'success' ? '连接成功' : 
+                 apiTestStatus === 'error' ? '连接失败' : 
+                 '连接测试'
+                }
+              </button>
             </div>
             {isInterrupted && (<button onClick={resumeGeneration} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-3 mt-3"><Wand2 className="w-5 h-5" />检测到未完成书籍：继续续写</button>)}
           </div>
@@ -857,6 +887,31 @@ export default function App() {
           {(() => { let pageCounter = estimatedPages.intro - 1; return splitIntoPages(outline.introduction, 540).map((pageParas, pageIdx) => { pageCounter++; return ( <div key={`intro-${pageIdx}`} className="book-page-preview page-break mb-24 mx-auto"><div className="preview-header">{outline.title}</div>{pageIdx === 0 && ( <h2 className="text-[1.35rem] font-serif font-bold mb-8 text-center text-black mt-[1.5rem]" style={{ fontFamily: "SimHei" }}>引言</h2> )}<BookContent content={pageParas.join('\n\n')} /><div className="preview-footer">— {pageCounter} —</div></div> ); }); })()}
           {(() => { let globalPageCounter = 0; if (estimatedPages.chapters.length > 0) { globalPageCounter = estimatedPages.chapters[0].page - 1; } return outline.chapters.map((chap, idx) => { const contentReady = completedChapters.includes(idx) || (generatingChapterIdx === idx && chaptersContent[idx]); const content = contentReady ? chaptersContent[idx] : ""; const pages = contentReady ? splitIntoPages(content, 540) : [[""]]; return pages.map((pageParas, pageIdx) => { globalPageCounter++; return ( <div key={`chap-${idx}-${pageIdx}`} className="book-page-preview page-break flex flex-col relative content-page"><div className="preview-header">{outline.title}</div>{pageIdx === 0 && ( <div className="mt-[2rem] mb-[2rem] text-center w-full"><span className="text-[1rem] font-serif text-black block mb-2" style={{ fontFamily: "SimHei" }}>第 {idx + 1} 章</span><h2 className="text-[1.8rem] font-serif font-bold text-black leading-tight" style={{ fontFamily: "SimHei" }}>{chap.title}</h2></div> )}<div className="w-full text-left flex-grow">{contentReady ? ( <><BookContent content={pageParas.join('\n\n')} />{generatingChapterIdx === idx && pageIdx === pages.length - 1 && ( <div className="flex items-center gap-2 text-stone-400 mt-8 mb-4 justify-center no-print"><Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm font-serif">AI 正在奋笔疾书...</span></div> )}</> ) : ( <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-stone-400 no-print"><Loader2 className="w-8 h-8 animate-spin mb-4" /><p className="font-serif">等待生成...</p></div> )}</div><div className="preview-footer">— {globalPageCounter} —</div></div> ); }); }); })()}
           <div className="book-page-preview page-break flex flex-col items-center justify-center min-h-[50vh] text-center border-t border-stone-200 mt-32 pt-16"><div className="w-12 h-12 mb-8 mx-auto bg-stone-900 rounded-[12px] flex items-center justify-center text-white"><BookOpen className="w-6 h-6" /></div><p className="font-serif text-lg text-stone-500 max-w-md">全书完</p><p className="mt-8 text-sm text-stone-400 font-sans tracking-wide">本著作由 InstaBook Builder 强力驱动生成</p></div>
+        </div>
+      )}
+      
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-stone-900/50 z-[100] flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-stone-200">
+            <div className="p-6">
+              <h3 className="text-xl font-bold font-serif mb-2 text-stone-900">重新开始？</h3>
+              <p className="text-stone-500 mb-8 leading-relaxed">确定要清除当前的所有进度和内容吗？建议在重新书写前先导出当前项目。</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 py-3 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-xl transition-colors"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={confirmResetProject}
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  确定清除
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

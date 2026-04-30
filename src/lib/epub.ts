@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { BookOutline } from './zhipu';
+import { BookOutline } from './qwen';
 
 export const generateEPUB = async (
   outline: BookOutline,
