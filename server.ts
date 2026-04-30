@@ -48,6 +48,21 @@ async function startServer() {
     }
   });
 
+  app.post("/api/login", (req, res) => {
+    const { username, password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword) {
+      return res.status(500).json({ ok: false, error: "系统未配置管理员密码" });
+    }
+
+    if (username === "ADMIN" && password === adminPassword) {
+      return res.json({ ok: true });
+    } else {
+      return res.status(401).json({ ok: false, error: "用户名或密码错误" });
+    }
+  });
+
   app.post("/api/qwen", async (req, res) => {
     try {
       const apiKey = process.env.QWEN_API_KEY || process.env.VITE_QWEN_API_KEY;

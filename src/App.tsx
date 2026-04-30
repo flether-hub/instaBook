@@ -61,6 +61,85 @@ export default function App() {
   const [isTestingApi, setIsTestingApi] = useState(false);
   const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem("isLoggedIn") === "true");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError("");
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setIsLoggedIn(true);
+        sessionStorage.setItem("isLoggedIn", "true");
+      } else {
+        setLoginError(data.error || "登录失败");
+      }
+    } catch (err: any) {
+      setLoginError("网络错误，请稍后重试");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-stone-200">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-stone-900 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-bold font-serif text-stone-900">AI 图书生成器</h1>
+            <p className="text-stone-500 mt-2">请登录以继续使用</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">用户名</label>
+              <input 
+                type="text" 
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                placeholder="请输入用户名"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">密码</label>
+              <input 
+                type="password" 
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="请输入密码"
+                required
+              />
+            </div>
+            {loginError && <div className="text-red-500 text-sm">{loginError}</div>}
+            <button 
+              type="submit" 
+              disabled={isLoggingIn}
+              className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : "登录"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   const testApiKey = async () => {
     setIsTestingApi(true);
     setApiTestStatus('idle');

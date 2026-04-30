@@ -115,8 +115,19 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
 }`;
 
   let jsonStr = await callQwen(prompt, true, onProgress);
-  if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/```$/, '').trim();
   
+  // 提取 JSON：尝试匹配 ```json ... ``` 块，如果找不到再尝试找第一个 { 和最后一个 }
+  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonMatch && jsonMatch[1]) {
+    jsonStr = jsonMatch[1];
+  } else {
+    const firstBrace = jsonStr.indexOf('{');
+    const lastBrace = jsonStr.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+    }
+  }
+
   let parsed: Partial<BookOutline> = {};
   try {
     parsed = JSON.parse(jsonStr.trim() || "{}");
