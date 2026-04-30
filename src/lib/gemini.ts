@@ -34,18 +34,20 @@ async function callGemini(prompt: string, isJson: boolean = false, onProgress?: 
   // 1. 在 AI Studio 预览环境或手动提供了公开 Key 时，直接从前端调用
   if (isPreview || envGeminiKey) {
     const key = envGeminiKey || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : null) || 'preview-key';
-    const genAI = new GoogleGenAI(key);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro",
-      generationConfig: isJson ? { responseMimeType: "application/json" } : undefined
-    });
+    const ai = new GoogleGenAI({ apiKey: key as string });
 
-    const result = await model.generateContentStream(prompt);
+    const result = await ai.models.generateContentStream({
+      model: "gemini-3.1-pro-preview",
+      contents: prompt,
+      config: isJson ? { responseMimeType: "application/json" } : undefined
+    });
+    
     let fullText = "";
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      fullText += chunkText;
-      onProgress?.(fullText);
+    for await (const chunk of result) {
+      if (chunk.text) {
+        fullText += chunk.text;
+        onProgress?.(fullText);
+      }
     }
     return fullText;
   }
@@ -67,28 +69,36 @@ async function callGemini(prompt: string, isJson: boolean = false, onProgress?: 
     throw new Error(err.error || `Server Error: ${response.status}`);
   }
 
-  // 解析流式响应 (Google API 原始流解析)
+  // 解析流式响应 (SSE 解析)
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   let fullText = "";
+  let buffer = "";
   
   if (reader) {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       
-      const chunk = decoder.decode(value, { stream: true });
-      // 简单流解析逻辑：寻找 "text": "..." 块
-      const matches = chunk.match(/"text":\s*"([^"]+)"/g);
-      if (matches) {
-        matches.forEach(m => {
-          const t = m.match(/"text":\s*"([^"]+)"/)?.[1];
-          if (t) {
-            const cleanT = t.replace(/\\n/g, '\n').replace(/\\"/g, '"');
-            fullText += cleanT;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\\n');
+      buffer = lines.pop() || ""; // Keep the last incomplete line in buffer
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6).trim();
+          if (!dataStr || dataStr === '[DONE]') continue;
+          try {
+            const data = JSON.parse(dataStr);
+            const textPart = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textPart) {
+              fullText += textPart;
+              onProgress?.(fullText);
+            }
+          } catch (e) {
+            console.error("Error parsing chunk:", e);
           }
-        });
-        onProgress?.(fullText);
+        }
       }
     }
   }
@@ -115,7 +125,20 @@ export const generateBookOutline = async (topicOrTitle: string, authorName: stri
 
   let jsonStr = await callGemini(prompt, true, onProgress);
   if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/```$/, '').trim();
-  return JSON.parse(jsonStr.trim() || "{}") as BookOutline;
+  
+  let parsed: Partial<BookOutline> = {};
+  try {
+    parsed = JSON.parse(jsonStr.trim() || "{}");
+  } catch (e) {
+    console.error("Failed to parse AI JSON:", jsonStr);
+    throw new Error("模型返回的数据格式无法解析为 JSON，请重试。");
+  }
+
+  // Ensure arrays exist
+  if (!parsed.chapters) parsed.chapters = [];
+  if (!parsed.recommendations) parsed.recommendations = [];
+
+  return parsed as BookOutline;
 };
 
 export const generateChapterContent = async (bookTitle: string, chapterTitle: string, chapterSummary: string, writingStyle: string, onProgress?: (text: string) => void): Promise<string> => {
