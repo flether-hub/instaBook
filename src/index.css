@@ -8,18 +8,18 @@
 /* Realistic Book Page Preview Support */
 .book-page-preview {
   background-color: #fcfbf8; /* warm paper color */
-  width: 100%;
-  max-width: 560px; /* Standard A5 width at screen scale */
-  aspect-ratio: 148 / 210; /* Strict A5 proportions */
+  width: 560px; /* Base width for A5 at screen scale */
+  height: 794px; /* Strict A5 height (560 * 210 / 148) */
   margin: 0 auto 2rem auto;
   box-shadow: 
     0 10px 25px -5px rgba(0, 0, 0, 0.08), 
     0 8px 10px -6px rgba(0, 0, 0, 0.08);
-  padding: 75px 60px; /* ~15-20mm margins */
+  padding: 85px 65px 75px 65px; /* Refined margins: Top 85px, Sides 65px, Bottom 75px */
   position: relative;
   box-sizing: border-box;
   color: #2c2a29;
   border-radius: 0 !important; /* Force no rounded corners */
+  overflow: hidden; /* Ensure page breaks are respected visually */
 }
 
 /* Preview Header */

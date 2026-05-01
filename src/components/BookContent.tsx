@@ -16,10 +16,13 @@ export function BookContent({ content }: BookContentProps) {
           return parts.map((part, i) => (i % 2 === 1 ? <strong key={i} className="font-bold">{part}</strong> : part));
         };
 
+        const noIndent = para.startsWith('[NO_INDENT]');
+        const cleanPara = noIndent ? para.replace('[NO_INDENT]', '') : para;
+
         // If it looks like a heading (starts with #)
-        if (para.startsWith('#')) {
-          const level = para.match(/^#+/)?.[0].length || 1;
-          const cleanText = para.replace(/^#+\s*/, '');
+        if (cleanPara.startsWith('#')) {
+          const level = cleanPara.match(/^#+/)?.[0].length || 1;
+          const cleanText = cleanPara.replace(/^#+\s*/, '');
           const Tag = `h${Math.min(level + 1, 6)}` as any;
           
           let headingClass = "font-bold font-sans text-black ";
@@ -39,8 +42,8 @@ export function BookContent({ content }: BookContentProps) {
         }
 
         return (
-          <p key={idx} className="mb-[0.6em] indent-[2em]">
-            {processBolds(para)}
+          <p key={idx} className={`mb-[0.6em] ${noIndent ? '' : 'indent-[2em]'}`}>
+            {processBolds(cleanPara)}
           </p>
         );
       })}
