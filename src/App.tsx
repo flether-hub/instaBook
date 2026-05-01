@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw, Activity, AlignLeft, Cpu, User, PenTool, Hash, CircleSlash2, Play, RefreshCw } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
+import { PaginatedSection } from './components/PaginatedSection';
 import { generateBookOutline, generateChapterContent, testConnection, BookOutline } from './lib/api';
 import { generateEPUB } from './lib/epub';
 import jsPDF from 'jspdf';
@@ -121,10 +122,32 @@ export default function App() {
   const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem("isLoggedIn") === "true");
-  const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [isCheckingAutoLogin, setIsCheckingAutoLogin] = useState(!isLoggedIn);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setIsCheckingAutoLogin(true);
+      fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: "" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok && data.warning === 'Bypassed login because ADMIN_PASSWORD is not set') {
+          setIsLoggedIn(true);
+          sessionStorage.setItem("isLoggedIn", "true");
+        }
+      })
+      .catch(console.error)
+      .finally(() => setIsCheckingAutoLogin(false));
+    } else {
+      setIsCheckingAutoLogin(false);
+    }
+  }, [isLoggedIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,6 +179,14 @@ export default function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [exportProgress, setExportProgress] = useState({ isExporting: false, text: "", percent: 0 });
+
+  if (isCheckingAutoLogin) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return (
@@ -995,26 +1026,27 @@ export default function App() {
           {(() => {
             let pageCounter = estimatedPages.intro - (outline.recommendations?.length || 0);
             return outline.recommendations?.map((rec, idx) => {
-              const pages = splitIntoPages(rec.content);
-              return pages.map((pageParas, pageIdx) => {
-                pageCounter++;
-                return (
-                  <div key={`rec-${idx}-${pageIdx}`} className="book-page-preview page-break">
-                    {/* Header removed as requested */}
-                    {pageIdx === 0 && (
-                      <h2 className="text-[1.35rem] font-serif font-bold mb-8 text-center text-black mt-[1.5rem]" style={{ fontFamily: "SimHei" }}>推荐序</h2>
-                    )}
-                    <BookContent content={pageParas.join('\n\n')} />
-                    {pageIdx === pages.length - 1 && (
-                      <div className="mt-8 text-right font-serif">
-                        <p className="text-[1rem] font-bold">{rec.recommender}</p>
-                        <p className="text-stone-500 text-[0.875rem]">{rec.recommenderTitle}</p>
-                      </div>
-                    )}
-                    <div className="preview-footer">— {pageCounter} —</div>
-                  </div>
-                );
-              });
+              const startCount = pageCounter;
+              pageCounter += splitIntoPages(rec.content).length; // advance counter estimate
+              
+              const header = <h2 className="text-[1.35rem] font-serif font-bold mb-0 text-center text-black mt-2" style={{ fontFamily: "SimHei" }}>推荐序</h2>;
+              const footer = (
+                <div className="mt-8 text-right font-serif">
+                   <p className="text-[1rem] font-bold">{rec.recommender}</p>
+                   <p className="text-stone-500 text-[0.875rem]">{rec.recommenderTitle}</p>
+                </div>
+              );
+
+              return (
+                 <PaginatedSection 
+                   key={`rec-${idx}`} 
+                   content={rec.content} 
+                   outlineTitle={outline.title} 
+                   startPageCounter={startCount}
+                   sectionHeader={header}
+                   sectionFooter={footer}
+                 />
+              );
             });
           })()}
           {(() => {
@@ -1053,57 +1085,63 @@ export default function App() {
                       );
                     })}
                   </div>
-                  <div className="preview-footer">—</div>
+                  <div className="preview-footer">— 目录 —</div>
                 </div>
               );
             }
             return tocPages;
           })()}
-          {(() => { let pageCounter = estimatedPages.intro - 1; return splitIntoPages(outline.introduction, true).map((pageParas, pageIdx) => { pageCounter++; return ( <div key={`intro-${pageIdx}`} className="book-page-preview page-break mb-8 mx-auto"><div className="preview-header">{outline.title}</div>{pageIdx === 0 && ( <h2 className="text-[1.35rem] font-serif font-bold mb-8 text-center text-black mt-[1.5rem]" style={{ fontFamily: "SimHei" }}>引言</h2> )}<BookContent content={pageParas.join('\n\n')} /><div className="preview-footer">— {pageCounter} —</div></div> ); }); })()}
           {(() => { 
-            return outline.chapters.map((chap, idx) => { 
+             const header = <h2 className="text-[1.35rem] font-serif font-bold mb-0 text-center text-black mt-2" style={{ fontFamily: "SimHei" }}>引言</h2>;
+             return (
+                 <PaginatedSection 
+                   key="intro" 
+                   content={outline.introduction} 
+                   outlineTitle={outline.title} 
+                   startPageCounter={estimatedPages.intro}
+                   sectionHeader={header}
+                 />
+             );
+          })()}
+          {outline.chapters.map((chap, idx) => { 
               const contentReady = completedChapters.includes(idx) || (generatingChapterIdx === idx && chaptersContent[idx]); 
               const content = contentReady ? chaptersContent[idx] : ""; 
-              const pages = contentReady ? splitIntoPages(content, false, true) : [[""]]; 
               
               // Use the stable estimated start page for this chapter
               let chapterStartPage = estimatedPages.chapters[idx]?.page || (idx === 0 ? estimatedPages.intro + splitIntoPages(outline.introduction || "", true).length : 1);
               
-              return pages.map((pageParas, pageIdx) => { 
-                const currentPageNum = chapterStartPage + pageIdx;
-                return ( 
-                  <div key={`chap-${idx}-${pageIdx}`} className="book-page-preview page-break flex flex-col relative content-page">
+              const header = (
+                <div className="mt-[1rem] mb-[1rem] text-center w-full">
+                   <span className="text-[1rem] font-serif text-black block mb-2" style={{ fontFamily: "SimHei" }}>第 {idx + 1} 章</span>
+                   <h2 className="text-[1.8rem] font-serif font-bold text-black leading-tight" style={{ fontFamily: "SimHei" }}>{chap.title}</h2>
+                </div> 
+              );
+
+              if (!contentReady) {
+                return (
+                  <div key={`chap-${idx}-empty`} className="book-page-preview page-break flex flex-col relative content-page mb-8 mx-auto">
                     <div className="preview-header">{outline.title}</div>
-                    {pageIdx === 0 && ( 
-                      <div className="mt-[2rem] mb-[2rem] text-center w-full">
-                        <span className="text-[1rem] font-serif text-black block mb-2" style={{ fontFamily: "SimHei" }}>第 {idx + 1} 章</span>
-                        <h2 className="text-[1.8rem] font-serif font-bold text-black leading-tight" style={{ fontFamily: "SimHei" }}>{chap.title}</h2>
-                      </div> 
-                    )}
-                    <div className="w-full text-left flex-grow">
-                      {contentReady ? ( 
-                        <>
-                          <BookContent content={pageParas.join('\n\n')} />
-                          {generatingChapterIdx === idx && pageIdx === pages.length - 1 && ( 
-                            <div className="flex items-center gap-2 text-stone-400 mt-8 mb-4 justify-center no-print">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span className="text-sm font-serif">AI 正在奋笔疾书...</span>
-                            </div> 
-                          )}
-                        </> 
-                      ) : ( 
-                        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-stone-400 no-print">
-                          <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                          <p className="font-serif">等待生成...</p>
-                        </div> 
-                      )}
+                    {header}
+                    <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-stone-400 no-print flex-grow">
+                      <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                      <p className="font-serif">等待生成...</p>
                     </div>
-                    <div className="preview-footer">— {currentPageNum} —</div>
-                  </div> 
-                ); 
-              }); 
-            }); 
-          })()}
+                    <div className="preview-footer">— {chapterStartPage} —</div>
+                  </div>
+                );
+              }
+
+              return (
+                 <PaginatedSection 
+                   key={`chap-${idx}`} 
+                   content={content} 
+                   outlineTitle={outline.title} 
+                   startPageCounter={chapterStartPage}
+                   sectionHeader={header}
+                   isLoading={generatingChapterIdx === idx}
+                 />
+              );
+          })}
           <div className="book-page-preview page-break flex flex-col items-center justify-center min-h-[50vh] text-center border-t border-stone-200 pt-16"><div className="w-12 h-12 mb-8 mx-auto bg-stone-900 rounded-[12px] flex items-center justify-center text-white"><BookOpen className="w-6 h-6" /></div><p className="font-serif text-lg text-stone-500 max-w-md">全书完</p><p className="mt-8 text-sm text-stone-400 font-sans tracking-wide">本著作由 InstaBook Builder 强力驱动生成</p></div>
         </div>
       )}

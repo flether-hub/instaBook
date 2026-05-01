@@ -4,8 +4,8 @@ export async function onRequestPost({ request, env }) {
     const adminPassword = env.ADMIN_PASSWORD;
 
     if (!adminPassword) {
-      return new Response(JSON.stringify({ ok: false, error: "系统未配置管理员密码" }), {
-        status: 500,
+      return new Response(JSON.stringify({ ok: true, warning: 'Bypassed login because ADMIN_PASSWORD is not set' }), {
+        status: 200,
         headers: { "Content-Type": "application/json" }
       });
     }

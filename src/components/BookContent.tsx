@@ -8,7 +8,7 @@ export function BookContent({ content }: BookContentProps) {
   const paragraphs = content.split('\n\n').filter((p) => p.trim() !== '');
 
   return (
-    <div className="font-serif text-[15px] leading-[1.8] text-justify px-1">
+    <div className="font-serif text-[15px] leading-[1.8] text-justify px-1 pb-4">
       {paragraphs.map((para, idx) => {
         // Handle basic markdown bolding if present
         const processBolds = (text: string) => {
@@ -36,13 +36,13 @@ export function BookContent({ content }: BookContentProps) {
           
           return React.createElement(
             Tag,
-            { key: idx, className: headingClass },
+            { key: idx, className: headingClass, style: { breakAfter: 'avoid', columnBreakAfter: 'avoid' } },
             processBolds(cleanText)
           );
         }
 
         return (
-          <p key={idx} className={`mb-[0.6em] ${noIndent ? '' : 'indent-[2em]'}`}>
+          <p key={idx} className={`mb-[0.6em] ${noIndent ? '' : 'indent-[2em]'}`} style={{ widows: 2, orphans: 2 }}>
             {processBolds(cleanPara)}
           </p>
         );
