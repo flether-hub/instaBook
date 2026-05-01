@@ -1,5 +1,6 @@
 export async function onRequestPost({ request, env }: any) {
-  const apiKey = env.QWEN_API_KEY || env.VITE_QWEN_API_KEY;
+  const apiKey = env.DEEPSEEK_API_KEY || env.QWEN_API_KEY;
+  let baseUrl = env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
   
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "API Key未配置。如果在 Cloudflare 后台刚添加变量，必须在“部署”历史中点击【重试部署】重新构建，新变量才会生效！" }), {
@@ -10,16 +11,28 @@ export async function onRequestPost({ request, env }: any) {
 
   try {
     const body: any = await request.json();
-    const { stream, ...payload } = body;
+    const { stream, model, ...payload } = body;
+    let modelId = model;
+    
+    let headers: any = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    };
 
-    const response = await fetch(`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`, {
+    const cleanKey = apiKey.replace(/^"|"$/g, '').trim();
+    if (baseUrl.includes("generativelanguage")) {
+      headers["x-goog-api-key"] = cleanKey;
+      baseUrl = `${baseUrl.split('?')[0]}?key=${cleanKey}`;
+    } else {
+      headers["Authorization"] = `Bearer ${cleanKey}`;
+    }
+
+    const response = await fetch(baseUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      headers,
       body: JSON.stringify({
         ...payload,
+        model: modelId,
         stream: true
       })
     });

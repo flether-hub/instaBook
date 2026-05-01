@@ -1088,10 +1088,10 @@ export default function App() {
                   <h2 className="text-[1.35rem] font-serif font-bold mb-8 text-center text-black mt-[1.5rem]" style={{ fontFamily: "SimHei" }}>目 录</h2>
                   <div className="space-y-[0.6rem] font-serif text-[0.85rem] leading-tight">
                     {p === 0 && (
-                      <div className="flex items-baseline justify-between mb-2">
-                        <span className="font-bold text-[0.95rem]">引言</span>
-                        <div className="flex-grow border-b border-dotted border-stone-400 relative top-[-4px] mx-4"></div>
-                        <span className="font-bold text-[0.95rem]">{estimatedPages.intro}</span>
+                      <div className="flex items-baseline justify-between group mb-2">
+                        <span className="pr-4 bg-[#fcfbf8] transition-colors z-10 print:bg-[#fcfbf8] inline-block max-w-[85%]">引言</span>
+                        <div className="flex-grow border-b border-dotted border-stone-400 relative top-[-4px]"></div>
+                        <span className="pl-4 bg-[#fcfbf8] transition-colors z-10 print:bg-[#fcfbf8]">{estimatedPages.intro}</span>
                       </div>
                     )}
                     {pageChapters.map((chap, idx) => {
