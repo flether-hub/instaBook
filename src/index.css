@@ -14,8 +14,7 @@
   margin: 0 auto 2rem auto;
   box-shadow: 
     0 10px 25px -5px rgba(0, 0, 0, 0.08), 
-    0 8px 10px -6px rgba(0, 0, 0, 0.08),
-    inset 16px 0 24px -16px rgba(0,0,0,0.06); /* book spine inner shadow */
+    0 8px 10px -6px rgba(0, 0, 0, 0.08);
   padding: 75px 60px; /* ~15-20mm margins */
   position: relative;
   box-sizing: border-box;

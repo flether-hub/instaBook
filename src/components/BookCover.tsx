@@ -34,7 +34,6 @@ export function BookCover({
       className="relative w-full aspect-[148/210] max-w-[560px] mx-auto rounded-none overflow-hidden flex flex-col"
       style={{ 
         backgroundColor: '#1c1917',
-        borderLeft: '6px solid #a8a29e',
         position: 'relative'
       }}
     >
@@ -100,16 +99,6 @@ export function BookCover({
         {/* Decorative Borders */}
         <rect x="15" y="15" width="370" height="570" fill="none" stroke="url(#gold)" strokeWidth="0.5" strokeOpacity="0.3" />
       </svg>
-      
-      {/* Book Binding effect */}
-      <div 
-        className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none binder-effect"
-        style={{ 
-          zIndex: 20,
-          background: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)',
-          borderRight: '1px solid rgba(255,255,255,0.1)'
-        }}
-      ></div>
       
       {/* Content Area */}
       <div className="relative flex flex-col h-full p-12 md:p-16" style={{ zIndex: 30 }}>
