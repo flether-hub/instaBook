@@ -3,10 +3,13 @@ export async function onRequestPost({ request, env }) {
     const body = await request.json();
     const { stream, model, ...payload } = body;
     
-    const apiKey = env.QWEN_API_KEY || env.API_KEY || env.VITE_API_KEY;
+    const apiKey = env.DEEPSEEK_API_KEY || env.QWEN_API_KEY || env.API_KEY || env.VITE_API_KEY || env.LLM_API_KEY;
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: `Server configuration error: QWEN_API_KEY not found` }), {
+      return new Response(JSON.stringify({ 
+        error: "Server configuration error: LLM API key not found in environment variables.",
+        tip: "Please set one of these environment variables in Cloudflare dashboard: DEEPSEEK_API_KEY, QWEN_API_KEY, API_KEY, or LLM_API_KEY"
+      }), {
         status: 500,
         headers: { "Content-Type": "application/json" }
       });

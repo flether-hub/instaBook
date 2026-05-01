@@ -18,9 +18,13 @@ async function startServer() {
     try {
       const rawModel = (req.query.model as string);
       // Use DashScope for all models as DeepSeek is also implemented via Alibaba
-      const apiKey = process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY;
+      const apiKey = process.env.DEEPSEEK_API_KEY || process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || process.env.LLM_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ ok: false, error: `API Key (QWEN_API_KEY) not configured in environment variables.` });
+        return res.status(500).json({ 
+          ok: false, 
+          error: `API Key not configured in environment variables.`,
+          tip: "Please set DEEPSEEK_API_KEY, QWEN_API_KEY, API_KEY or LLM_API_KEY in your .env file."
+        });
       }
 
       let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
@@ -71,9 +75,12 @@ async function startServer() {
   app.post("/api/generate", async (req, res) => {
     try {
       const { stream, model, ...payload } = req.body;
-      const apiKey = process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY;
+      const apiKey = process.env.DEEPSEEK_API_KEY || process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || process.env.LLM_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ error: "Server configuration error: QWEN_API_KEY not found" });
+        return res.status(500).json({ 
+          error: "Server configuration error: LLM API key not found",
+          tip: "Please set DEEPSEEK_API_KEY, QWEN_API_KEY, API_KEY or LLM_API_KEY in your .env file."
+        });
       }
       
       let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";

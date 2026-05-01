@@ -3,10 +3,13 @@ export async function onRequestGet({ request, env }) {
     const processUrl = new URL(request.url);
     const model = processUrl.searchParams.get("model");
     
-    const apiKey = env.QWEN_API_KEY || env.API_KEY || env.VITE_API_KEY;
+    const apiKey = env.DEEPSEEK_API_KEY || env.QWEN_API_KEY || env.API_KEY || env.VITE_API_KEY || env.LLM_API_KEY;
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: `QWEN_API_KEY not configured` }), {
+      return new Response(JSON.stringify({ 
+        error: "LLM API Key not configured in environment variables.",
+        tip: "Please set one of these environment variables in Cloudflare dashboard: DEEPSEEK_API_KEY, QWEN_API_KEY, API_KEY, or LLM_API_KEY"
+      }), {
         status: 500,
         headers: { "Content-Type": "application/json" }
       });
@@ -37,7 +40,7 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ ok: true, message: "API Key is valid and working." }), {
       headers: { "Content-Type": "application/json" }
     });
 

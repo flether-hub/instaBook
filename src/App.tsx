@@ -211,8 +211,8 @@ export default function App() {
     } catch (error: any) {
       console.error("Error generating outline:", error);
       let errorMessage = error?.message || String(error);
-      if (errorMessage.includes("API key not valid") || errorMessage.includes("API_KEY_INVALID")) {
-        errorMessage = "API Key 无效。请检查部署环境中的环境变量（QWEN_API_KEY）配置是否正确。";
+      if (errorMessage.includes("API key not valid") || errorMessage.includes("API_KEY_INVALID") || errorMessage.includes("not found in environment variables")) {
+        errorMessage = "API Key 无效或未配置。请检查部署环境中的环境变量（DEEPSEEK_API_KEY, QWEN_API_KEY 等）配置是否正确。";
       }
       alert(`生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
       setIsGeneratingOutline(false);
