@@ -17,18 +17,17 @@ async function startServer() {
   app.get("/api/test-key", async (req, res) => {
     try {
       const rawModel = (req.query.model as string);
-      // Use DashScope for all models as DeepSeek is also implemented via Alibaba
-      const apiKey = process.env.DEEPSEEK_API_KEY || process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || process.env.LLM_API_KEY;
+      let apiKey = process.env.DEEPSEEK_API_KEY || process.env.QWEN_API_KEY;
+      let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+      let modelId = rawModel;
+
       if (!apiKey) {
         return res.status(500).json({ 
           ok: false, 
           error: `API Key not configured in environment variables.`,
-          tip: "Please set DEEPSEEK_API_KEY, QWEN_API_KEY, API_KEY or LLM_API_KEY in your .env file."
+          tip: "Please set DEEPSEEK_API_KEY or QWEN_API_KEY in your .env file."
         });
       }
-
-      let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-      let modelId = rawModel;
       
       const payload = {
         model: modelId,
@@ -37,12 +36,23 @@ async function startServer() {
         temperature: 1.0
       };
 
+      let headers: any = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      };
+      
+      // Some API servers might expect x-goog-api-key or need a cleaner bearer token without quotes
+      const cleanKey = apiKey.replace(/^"|"$/g, '').trim();
+      if (baseUrl.includes("generativelanguage")) {
+        headers["x-goog-api-key"] = cleanKey;
+        baseUrl = `${baseUrl.split('?')[0]}?key=${cleanKey}`;
+      } else {
+        headers["Authorization"] = `Bearer ${cleanKey}`;
+      }
+
       const response = await fetch(baseUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
+        headers,
         body: JSON.stringify(payload)
       });
 
@@ -75,23 +85,33 @@ async function startServer() {
   app.post("/api/generate", async (req, res) => {
     try {
       const { stream, model, ...payload } = req.body;
-      const apiKey = process.env.DEEPSEEK_API_KEY || process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || process.env.LLM_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({ 
-          error: "Server configuration error: LLM API key not found",
-          tip: "Please set DEEPSEEK_API_KEY, QWEN_API_KEY, API_KEY or LLM_API_KEY in your .env file."
-        });
-      }
-      
+      let apiKey = process.env.DEEPSEEK_API_KEY || process.env.QWEN_API_KEY;
       let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
       let modelId = model;
 
+      if (!apiKey) {
+        return res.status(500).json({ 
+          error: "Server configuration error: LLM API key not found",
+          tip: "Please set DEEPSEEK_API_KEY or QWEN_API_KEY in your .env file."
+        });
+      }
+
+      let headers: any = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      };
+
+      const cleanKey = apiKey.replace(/^"|"$/g, '').trim();
+      if (baseUrl.includes("generativelanguage")) {
+        headers["x-goog-api-key"] = cleanKey;
+        baseUrl = `${baseUrl.split('?')[0]}?key=${cleanKey}`;
+      } else {
+        headers["Authorization"] = `Bearer ${cleanKey}`;
+      }
+
       const response = await fetch(baseUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
+        headers,
         body: JSON.stringify({
           ...payload,
           model: modelId,

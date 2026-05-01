@@ -180,51 +180,6 @@ export default function App() {
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [exportProgress, setExportProgress] = useState({ isExporting: false, text: "", percent: 0 });
 
-  if (isCheckingAutoLogin) {
-    return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
-        <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-stone-200">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-stone-900 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg">
-              <BookOpen className="w-8 h-8" />
-            </div>
-            <h1 className="text-3xl font-bold font-serif text-stone-900 tracking-tight">InstaBook</h1>
-            <p className="text-stone-500 mt-2">请输入访问密码</p>
-          </div>
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">访问密码</label>
-              <input 
-                type="password" 
-                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="请输入密码"
-                required
-              />
-            </div>
-            {loginError && <div className="text-red-500 text-sm">{loginError}</div>}
-            <button 
-              type="submit" 
-              disabled={isLoggingIn}
-              className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-2"
-            >
-              {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : "进入 InstaBook"}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   const testApiKey = async () => {
     setIsTestingApi(true);
     setApiTestStatus('idle');
@@ -298,6 +253,7 @@ export default function App() {
     stopRef.current = true;
     setStopRequested(true);
     setGeneratingChapterIdx(null);
+    setIsGeneratingOutline(false);
     if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
@@ -307,12 +263,13 @@ export default function App() {
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const generateAllChapters = async (bookOutline: BookOutline) => {
-    for (let i = 0; i < bookOutline.chapters.length; i++) {
+    const chapters = bookOutline.chapters || [];
+    for (let i = 0; i < chapters.length; i++) {
       if (completedChapters.includes(i)) continue; // Skip already completed chapters
       
       if (stopRef.current) break;
       setGeneratingChapterIdx(i);
-      addLog(`正在编撰第 ${i + 1} 章: ${bookOutline.chapters[i].title}...`, 'info');
+      addLog(`正在编撰第 ${i + 1} 章: ${chapters[i].title}...`, 'info');
       contentBufferRef.current = "";
       lastUpdateRef.current = Date.now();
       
@@ -326,8 +283,8 @@ export default function App() {
           const content = await generateChapterContent(
             bookOutline.title,
             genre,
-            bookOutline.chapters[i].title,
-            bookOutline.chapters[i].summary,
+            chapters[i].title,
+            chapters[i].summary,
             writingStyle,
             targetModel,
             (text) => {
@@ -352,7 +309,7 @@ export default function App() {
           addLog(`第 ${i + 1} 章编撰完成！`, 'success');
           success = true;
           
-          if (i < bookOutline.chapters.length - 1 && !stopRef.current) {
+          if (i < chapters.length - 1 && !stopRef.current) {
             addLog('休息片刻，准备下一章...', 'info');
             await sleep(5000); 
           }
@@ -430,7 +387,7 @@ export default function App() {
 
       contentMd += `## 引言\n\n${outline.introduction}\n\n`;
 
-      outline.chapters.forEach((chap, idx) => {
+      (outline.chapters || []).forEach((chap, idx) => {
         contentMd += `## 第 ${idx + 1} 章: ${chap.title}\n\n`;
         if (chaptersContent[idx]) {
           contentMd += `${chaptersContent[idx]}\n\n`;
@@ -492,7 +449,7 @@ export default function App() {
       if (data.completedChapters) setCompletedChapters(data.completedChapters);
 
       // Check if book is incomplete
-      if (data.outline && data.completedChapters && data.completedChapters.length < data.outline.chapters.length) {
+      if (data.outline && data.completedChapters && data.completedChapters.length < (data.outline.chapters || []).length) {
         setShowContinueModal(true);
       } else {
         alert("图书项目导入成功！");
@@ -655,12 +612,13 @@ export default function App() {
     }
   };
 
-  const isFullyCompleted = outline && completedChapters.length === outline.chapters.length;
-  const isInterrupted = outline && completedChapters.length < outline.chapters.length && !isGeneratingOutline && !generatingChapterIdx;
+  const isFullyCompleted = outline && completedChapters.length === (outline.chapters || []).length;
+  const isInterrupted = outline && completedChapters.length < (outline.chapters || []).length && !isGeneratingOutline && generatingChapterIdx === null;
 
-  const splitIntoPages = (content: string, isIntroduction = false, isChapterStart = false) => {
+  const splitIntoPages = (content: any, isIntroduction = false, isChapterStart = false) => {
+    if (!content || typeof content !== 'string') return [[""]];
     const pages: string[][] = [];
-    const paragraphs = content.split('\n\n').filter((p) => p.trim() !== '');
+    const paragraphs = content.split('\n\n').filter((p: string) => p.trim() !== '');
     
     // A5 页面宽度 560px, padding 65px*2 = 430px 可用空间
     // 强制紧凑排版：根据测量设置 charsPerLine 为 27/28
@@ -781,7 +739,7 @@ export default function App() {
     currentPage++; // Copyright Page
     
     // Recommendations
-    if (outline.recommendations) {
+    if (outline.recommendations && Array.isArray(outline.recommendations)) {
       outline.recommendations.forEach(rec => {
         const pages = splitIntoPages(rec.content);
         currentPage += pages.length;
@@ -790,7 +748,7 @@ export default function App() {
 
     // Table of Contents
     const chaptersPerTocPage = 15;
-    const tocPagesNeeded = Math.max(1, Math.ceil((outline.chapters.length || 0) / chaptersPerTocPage));
+    const tocPagesNeeded = Math.max(1, Math.ceil(((outline.chapters || []).length) / chaptersPerTocPage));
     currentPage += tocPagesNeeded;
 
     // Intro
@@ -799,7 +757,7 @@ export default function App() {
     currentPage += introPages;
 
     // Chapters
-    const chaptersToC = outline.chapters.map((chap, idx) => {
+    const chaptersToC = (outline.chapters || []).map((chap, idx) => {
       const startPage = currentPage;
       
       // STABILITY FIX: While a chapter is generating, we use a fixed estimate
@@ -819,6 +777,51 @@ export default function App() {
     return outline ? estimatePageNumbers() : { intro: 1, chapters: [] };
   }, [outline, completedChapters]);
 
+  if (isCheckingAutoLogin) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <Loader2 className="w-8 h-8 text-stone-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-stone-200">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-stone-900 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-bold font-serif text-stone-900 tracking-tight">InstaBook</h1>
+            <p className="text-stone-500 mt-2">请输入访问密码</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">访问密码</label>
+              <input 
+                type="password" 
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="请输入密码"
+                required
+              />
+            </div>
+            {loginError && <div className="text-red-500 text-sm">{loginError}</div>}
+            <button 
+              type="submit" 
+              disabled={isLoggingIn}
+              className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : "进入 InstaBook"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900 font-sans selection:bg-stone-300 selection:text-stone-900 pb-24">
       
@@ -830,45 +833,49 @@ export default function App() {
           </div>
             <div className="flex items-center gap-2 md:gap-3">
               <input type="file" accept=".zip" className="hidden" ref={fileInputRef} onChange={importProject} />
-              <button 
-                onClick={() => fileInputRef.current?.click()} 
-                title="导入项目"
-                className="w-10 h-10 md:w-auto md:px-4 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center justify-center gap-2 shrink-0">
-                  <Upload className="w-4 h-4 shrink-0" />
-                  <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">导入</span>
-              </button>
-              {outline && (
+              {!(isGeneratingOutline || generatingChapterIdx !== null) && (
                 <>
                   <button 
-                    onClick={requestResetProject} 
-                    title="重新开始"
-                    className="w-10 h-10 md:w-auto md:px-4 text-red-600 hover:bg-red-50 bg-red-50/50 rounded-full transition-colors flex items-center justify-center gap-2 shrink-0">
-                      <RotateCcw className="w-4 h-4 shrink-0" />
-                      <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">重写</span>
-                  </button>
-                  {isInterrupted && (
-                    <button 
-                      onClick={resumeGeneration} 
-                      title="续写"
-                      className="w-10 h-10 md:w-auto md:px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors shadow-sm animate-pulse flex items-center justify-center gap-2 shrink-0">
-                        <Wand2 className="w-4 h-4 shrink-0" />
-                        <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">续写</span>
-                    </button>
-                  )}
-                  <button 
-                    onClick={exportProject} 
-                    title="导出项目"
+                    onClick={() => fileInputRef.current?.click()} 
+                    title="导入项目"
                     className="w-10 h-10 md:w-auto md:px-4 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center justify-center gap-2 shrink-0">
-                      <Archive className="w-4 h-4 shrink-0" />
-                      <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">导出</span>
+                      <Upload className="w-4 h-4 shrink-0" />
+                      <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">导入</span>
                   </button>
-                  <button 
-                    onClick={handleExport} 
-                    title="下载成书"
-                    className="w-10 h-10 md:w-auto md:px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-full transition-colors shadow-sm flex items-center justify-center gap-2 shrink-0">
-                      <Download className="w-4 h-4 shrink-0" />
-                      <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">下载</span>
-                  </button>
+                  {outline && (
+                    <>
+                      <button 
+                        onClick={requestResetProject} 
+                        title="重新开始"
+                        className="w-10 h-10 md:w-auto md:px-4 text-red-600 hover:bg-red-50 bg-red-50/50 rounded-full transition-colors flex items-center justify-center gap-2 shrink-0">
+                          <RotateCcw className="w-4 h-4 shrink-0" />
+                          <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">重写</span>
+                      </button>
+                      {isInterrupted && (
+                        <button 
+                          onClick={resumeGeneration} 
+                          title="续写"
+                          className="w-10 h-10 md:w-auto md:px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors shadow-sm animate-pulse flex items-center justify-center gap-2 shrink-0">
+                            <Wand2 className="w-4 h-4 shrink-0" />
+                            <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">续写</span>
+                        </button>
+                      )}
+                      <button 
+                        onClick={exportProject} 
+                        title="导出项目"
+                        className="w-10 h-10 md:w-auto md:px-4 text-stone-600 hover:bg-stone-200 bg-stone-100 rounded-full transition-colors flex items-center justify-center gap-2 shrink-0">
+                          <Archive className="w-4 h-4 shrink-0" />
+                          <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">导出</span>
+                      </button>
+                      <button 
+                        onClick={handleExport} 
+                        title="下载成书"
+                        className="w-10 h-10 md:w-auto md:px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-full transition-colors shadow-sm flex items-center justify-center gap-2 shrink-0">
+                          <Download className="w-4 h-4 shrink-0" />
+                          <span className="hidden md:inline-block font-medium text-sm whitespace-nowrap">下载</span>
+                      </button>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -950,24 +957,7 @@ export default function App() {
               
               <div className="flex gap-2">
                 {stopRequested ? (
-                  <>
-                    <button 
-                      onClick={() => {
-                        setStopRequested(false);
-                        stopRef.current = false;
-                        if (outline) generateAllChapters(outline);
-                      }}
-                      className="text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium shadow-sm"
-                    >
-                      <Play className="w-4 h-4 fill-current" />继续
-                    </button>
-                    <button 
-                      onClick={requestResetProject}
-                      className="text-stone-600 bg-stone-100 hover:bg-stone-200 flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <RotateCcw className="w-4 h-4" />重新策划
-                    </button>
-                  </>
+                  <span className="text-stone-500 text-sm font-medium px-3 py-1.5">已停止</span>
                 ) : (
                   <button 
                     onClick={stopGeneration} 
@@ -980,7 +970,7 @@ export default function App() {
             </div>
             <div className="space-y-4">
               <div className="flex flex-col gap-2"><div className="flex items-center gap-4">{isGeneratingOutline ? (<Loader2 className="w-5 h-5 animate-spin text-stone-400" />) : (<CheckCircle2 className="w-5 h-5 text-emerald-500" />)}<span className={isGeneratingOutline ? "text-stone-600" : "text-stone-900 font-medium"}>正在策划出版大纲与章节结构</span></div>{isGeneratingOutline && outlineProgressText && ( <div className="ml-9 p-3 bg-stone-50 rounded-lg border border-stone-200 max-h-40 overflow-y-auto w-full max-w-[calc(100%-2.25rem)]"><pre className="text-xs text-stone-500 whitespace-pre-wrap font-mono overflow-x-hidden w-full">{outlineProgressText}</pre></div> )}</div>
-              {outline && outline.chapters.map((chap, idx) => (<div key={idx} className="flex items-center gap-4 text-sm md:text-base">{completedChapters.includes(idx) ? ( <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> ) : generatingChapterIdx === idx ? ( <Loader2 className="w-5 h-5 animate-spin text-emerald-500 shrink-0" /> ) : ( <div className="w-5 h-5 border-2 border-stone-200 rounded-full shrink-0" /> )}<span className={ completedChapters.includes(idx) ? "text-stone-900 font-medium" : generatingChapterIdx === idx ? "text-emerald-700 font-medium" : "text-stone-400" }>第 {idx + 1} 章：{chap.title}</span></div>))}
+              {outline && (outline.chapters || []).map((chap, idx) => (<div key={idx} className="flex items-center gap-4 text-sm md:text-base">{completedChapters.includes(idx) ? ( <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> ) : generatingChapterIdx === idx ? ( <Loader2 className="w-5 h-5 animate-spin text-emerald-500 shrink-0" /> ) : ( <div className="w-5 h-5 border-2 border-stone-200 rounded-full shrink-0" /> )}<span className={ completedChapters.includes(idx) ? "text-stone-900 font-medium" : generatingChapterIdx === idx ? "text-emerald-700 font-medium" : "text-stone-400" }>第 {idx + 1} 章：{chap.title}</span></div>))}
               
               {/* Detailed AI Process Logs */}
               <div className="mt-8 pt-6 border-t border-stone-100">
@@ -1024,8 +1014,9 @@ export default function App() {
           <div className="book-page-preview page-break flex flex-col items-center justify-center text-center mb-8"><h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 text-black" style={{ fontFamily: "SimHei" }}>{outline.title}</h1><h2 className="text-xl md:text-2xl font-serif text-stone-600 mb-16" style={{ fontFamily: "SimHei" }}>{outline.subtitle}</h2><div className="mt-auto mb-16"><p className="text-lg font-serif">作者：{outline.author}</p></div><div className="mt-12 text-sm text-stone-500 font-serif flex flex-col gap-2"><span>{outline.publisher} 出版</span></div></div>
           <div className="book-page-preview page-break flex flex-col justify-end pb-12 mb-8 text-stone-600 text-sm font-serif"><p className="mb-4">出版发行：{outline.publisher}</p><p className="mb-4">版权所有 © {new Date().getFullYear()} {outline.author}。保留所有权利。</p><p className="mb-4">未经出版者事先书面许可，不得以任何方式复制、存储或传播本书的任何部分。</p><p className="mb-4">本书字数：约 {wordCount.toLocaleString()} 字</p><p className="mb-4">开本：A5 (148mm × 210mm)</p><div className="mt-8 border-t border-stone-300 pt-4"><p>书号 (ISBN): {outline.isbn}</p><p>定价: {outline.price}</p></div></div>
           {(() => {
-            let pageCounter = estimatedPages.intro - (outline.recommendations?.length || 0);
-            return outline.recommendations?.map((rec, idx) => {
+            let pageCounter = estimatedPages.intro - (Array.isArray(outline.recommendations) ? outline.recommendations.length : 0);
+            if (!Array.isArray(outline.recommendations)) return null;
+            return outline.recommendations.map((rec, idx) => {
               const startCount = pageCounter;
               pageCounter += splitIntoPages(rec.content).length; // advance counter estimate
               
@@ -1040,7 +1031,7 @@ export default function App() {
               return (
                  <PaginatedSection 
                    key={`rec-${idx}`} 
-                   content={rec.content} 
+                   content={rec.content || ""} 
                    outlineTitle={outline.title} 
                    startPageCounter={startCount}
                    sectionHeader={header}
@@ -1051,13 +1042,13 @@ export default function App() {
           })()}
           {(() => {
             const chaptersPerTocPage = 15;
-            const tocPagesNeeded = Math.max(1, Math.ceil((outline.chapters.length || 0) / chaptersPerTocPage));
+            const tocPagesNeeded = Math.max(1, Math.ceil(((outline.chapters || []).length) / chaptersPerTocPage));
             const tocPages = [];
             
             for (let p = 0; p < tocPagesNeeded; p++) {
               const startIdx = p * chaptersPerTocPage;
               const endIdx = startIdx + chaptersPerTocPage;
-              const pageChapters = outline.chapters.slice(startIdx, endIdx);
+              const pageChapters = (outline.chapters || []).slice(startIdx, endIdx);
               
               tocPages.push(
                 <div key={`toc-page-${p}`} className="book-page-preview page-break mb-8 mx-auto">
@@ -1096,17 +1087,27 @@ export default function App() {
              return (
                  <PaginatedSection 
                    key="intro" 
-                   content={outline.introduction} 
+                   content={outline.introduction || ""} 
                    outlineTitle={outline.title} 
                    startPageCounter={estimatedPages.intro}
                    sectionHeader={header}
                  />
              );
           })()}
-          {outline.chapters.map((chap, idx) => { 
+          {(outline.chapters || []).map((chap, idx) => { 
               const contentReady = completedChapters.includes(idx) || (generatingChapterIdx === idx && chaptersContent[idx]); 
-              const content = contentReady ? chaptersContent[idx] : ""; 
+              let content = contentReady ? chaptersContent[idx] : ""; 
               
+              // Remove redundant chapter title from the beginning of the generated content
+              if (content) {
+                 const firstDoubleNewline = content.indexOf('\n\n');
+                 const firstParagraph = firstDoubleNewline !== -1 ? content.substring(0, firstDoubleNewline) : content;
+                 const cleanFirstParagraph = firstParagraph.replace(/^#+\s*/, '').replace(/第\s*\d+\s*章\s*/g, '').trim();
+                 if (cleanFirstParagraph === chap.title || cleanFirstParagraph === chap.title.trim()) {
+                    content = firstDoubleNewline !== -1 ? content.substring(firstDoubleNewline + 2).trimStart() : "";
+                 }
+              }
+
               // Use the stable estimated start page for this chapter
               let chapterStartPage = estimatedPages.chapters[idx]?.page || (idx === 0 ? estimatedPages.intro + splitIntoPages(outline.introduction || "", true).length : 1);
               

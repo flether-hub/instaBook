@@ -5,6 +5,7 @@ interface BookContentProps {
 }
 
 export function BookContent({ content }: BookContentProps) {
+  if (!content || typeof content !== 'string') return null;
   const paragraphs = content.split('\n\n').filter((p) => p.trim() !== '');
 
   return (

@@ -56,6 +56,7 @@ export function PaginatedSection({ content, outlineTitle, sectionHeader, section
             <div 
               ref={i === 0 ? contentRef : null}
               style={{
+                width: '430px',
                 columnWidth: '430px',
                 columnGap: '130px',
                 columnFill: 'auto',
@@ -81,7 +82,7 @@ export function PaginatedSection({ content, outlineTitle, sectionHeader, section
                   </div>
                )}
 
-               {isLoading && i === totalPages - 1 && (
+               {isLoading && (
                   <div className="flex items-center gap-2 text-stone-400 mt-8 mb-4 justify-center no-print" style={{ breakInside: 'avoid', columnBreakInside: 'avoid' }}>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-sm font-serif">AI 正在奋笔疾书...</span>

@@ -92,7 +92,7 @@ p { text-indent: 2em; margin-top: 0; margin-bottom: 1em; text-align: justify; }
   
   let playOrder = 3;
 
-  if (outline.recommendations && outline.recommendations.length > 0) {
+  if (outline.recommendations && Array.isArray(outline.recommendations) && outline.recommendations.length > 0) {
     manifestItems += `<item id="rec-page" href="Text/recommendations.xhtml" media-type="application/xhtml+xml"/>\n`;
     spineRefs += `<itemref idref="rec-page"/>\n`;
     ncxNavMap += `
@@ -112,7 +112,7 @@ p { text-indent: 2em; margin-top: 0; margin-bottom: 1em; text-align: justify; }
     </navPoint>\n`;
   playOrder++;
 
-  outline.chapters.forEach((chap, idx) => {
+  (outline.chapters || []).forEach((chap, idx) => {
     manifestItems += `<item id="chapter-${idx}" href="Text/chapter-${idx}.xhtml" media-type="application/xhtml+xml"/>\n`;
     spineRefs += `<itemref idref="chapter-${idx}"/>\n`;
     ncxNavMap += `
@@ -166,9 +166,9 @@ p { text-indent: 2em; margin-top: 0; margin-bottom: 1em; text-align: justify; }
         <ol>
             <li><a href="cover.xhtml">封面</a></li>
             <li><a href="toc.xhtml">详细目录</a></li>
-            ${outline.recommendations ? '<li><a href="recommendations.xhtml">推荐序</a></li>' : ''}
+            ${(outline.recommendations && Array.isArray(outline.recommendations)) ? '<li><a href="recommendations.xhtml">推荐序</a></li>' : ''}
             <li><a href="intro.xhtml">引言</a></li>
-            ${outline.chapters.map((c, i) => `<li><a href="chapter-${i}.xhtml">第${i+1}章 ${escapeHTML(c.title)}</a></li>`).join('')}
+            ${(outline.chapters || []).map((c, i) => `<li><a href="chapter-${i}.xhtml">第${i+1}章 ${escapeHTML(c.title)}</a></li>`).join('')}
         </ol>
     </nav>
 </body>
@@ -197,7 +197,7 @@ ${body}
     tocBody += `<li style="margin-bottom: 0.5em;"><a href="recommendations.xhtml" style="text-decoration: none; color: #333;">推荐序</a></li>`;
   }
   tocBody += `<li style="margin-bottom: 0.5em;"><a href="intro.xhtml" style="text-decoration: none; color: #333;">引言</a></li>`;
-  outline.chapters.forEach((chap, idx) => {
+  (outline.chapters || []).forEach((chap, idx) => {
       tocBody += `<li style="margin-bottom: 0.5em;"><a href="chapter-${idx}.xhtml" style="text-decoration: none; color: #333;">第${idx + 1}章 ${escapeHTML(chap.title)}</a></li>`;
   });
   tocBody += `</ul>`;
@@ -217,7 +217,7 @@ ${body}
       }).join('\\n');
   };
 
-  if (outline.recommendations && outline.recommendations.length > 0) {
+  if (outline.recommendations && Array.isArray(outline.recommendations) && outline.recommendations.length > 0) {
     let recHtml = `<h1 class="text-center">推荐序</h1>`;
     outline.recommendations.forEach(rec => {
       recHtml += renderMarkdown(rec.content);
@@ -227,9 +227,9 @@ ${body}
     texts.file("recommendations.xhtml", wrapHTML("推荐序", recHtml));
   }
 
-  texts.file("intro.xhtml", wrapHTML("引言", `<h1 class="text-center">引言</h1>${renderMarkdown(outline.introduction)}`));
+  texts.file("intro.xhtml", wrapHTML("引言", `<h1 class="text-center">引言</h1>${renderMarkdown(outline.introduction || "")}`));
 
-  outline.chapters.forEach((chap, idx) => {
+  (outline.chapters || []).forEach((chap, idx) => {
       const contentStr = chaptersContent[idx] || "本章内容尚未生成。";
       const chapHTML = `<h1 class="text-center">第${idx+1}章 ${escapeHTML(chap.title)}</h1>${renderMarkdown(contentStr)}`;
       texts.file(`chapter-${idx}.xhtml`, wrapHTML(`第${idx+1}章`, chapHTML));
