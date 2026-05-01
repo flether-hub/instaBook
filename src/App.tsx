@@ -26,6 +26,7 @@ export default function App() {
   const [writingStyle, setWritingStyle] = useState('严谨、专业、深具启发性');
   const [targetModel, setTargetModel] = useState('deepseek-v4-pro');
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
   const [outlineProgressText, setOutlineProgressText] = useState("");
   const [outline, setOutline] = useState<BookOutline | null>(null);
   
@@ -188,6 +189,7 @@ export default function App() {
     stopRef.current = false;
     setStopRequested(false);
     setIsGeneratingOutline(true);
+    setIsResuming(false);
     setOutlineProgressText("");
     setOutline(null);
     setChaptersContent({});
@@ -611,6 +613,7 @@ export default function App() {
 
   const resumeGeneration = async () => {
     if (!outline) return;
+    setIsResuming(true);
     stopRef.current = false;
     setStopRequested(false);
     await generateAllChapters(outline);
@@ -785,7 +788,7 @@ export default function App() {
       {(isGeneratingOutline || (outline && !isFullyCompleted && !stopRequested)) && (
         <div className="max-w-2xl mx-auto px-6 py-16 no-print">
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-stone-200">
-            <div className="flex items-center justify-between mb-8"><h3 className="text-xl font-bold flex items-center gap-3"><Loader2 className="w-5 h-5 animate-spin text-stone-500" />正在编撰您的著作...</h3><button onClick={stopGeneration} className="text-stone-500 hover:text-red-500 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"><Square className="w-4 h-4 fill-current" />停止生成</button></div>
+            <div className="flex items-center justify-between mb-8"><h3 className="text-xl font-bold flex items-center gap-3"><Loader2 className="w-5 h-5 animate-spin text-stone-500" />{isResuming ? "正在续写您的著作..." : "正在编撰您的著作..."}</h3><button onClick={stopGeneration} className="text-stone-500 hover:text-red-500 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"><Square className="w-4 h-4 fill-current" />停止生成</button></div>
             <div className="space-y-4">
               <div className="flex flex-col gap-2"><div className="flex items-center gap-4">{isGeneratingOutline ? (<Loader2 className="w-5 h-5 animate-spin text-stone-400" />) : (<CheckCircle2 className="w-5 h-5 text-emerald-500" />)}<span className={isGeneratingOutline ? "text-stone-600" : "text-stone-900 font-medium"}>正在策划出版大纲与章节结构</span></div>{isGeneratingOutline && outlineProgressText && ( <div className="ml-9 p-3 bg-stone-50 rounded-lg border border-stone-200 max-h-40 overflow-y-auto w-full max-w-[calc(100%-2.25rem)]"><pre className="text-xs text-stone-500 whitespace-pre-wrap font-mono overflow-x-hidden w-full">{outlineProgressText}</pre></div> )}</div>
               {outline && outline.chapters.map((chap, idx) => (<div key={idx} className="flex items-center gap-4 text-sm md:text-base">{completedChapters.includes(idx) ? ( <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> ) : generatingChapterIdx === idx ? ( <Loader2 className="w-5 h-5 animate-spin text-emerald-500 shrink-0" /> ) : ( <div className="w-5 h-5 border-2 border-stone-200 rounded-full shrink-0" /> )}<span className={ completedChapters.includes(idx) ? "text-stone-900 font-medium" : generatingChapterIdx === idx ? "text-emerald-700 font-medium" : "text-stone-400" }>第 {idx + 1} 章：{chap.title}</span></div>))}
