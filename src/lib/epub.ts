@@ -204,17 +204,20 @@ ${body}
   texts.file("toc.xhtml", wrapHTML("目录", tocBody));
 
   const renderMarkdown = (text: string) => {
-      return text.split('\\n\\n').filter(p => p.trim()).map(p => {
+      // Split by one or more newlines to ensure paragraphs are preserved even if single newlines are returned
+      return text.split(/\r?\n+/).filter(p => p.trim()).map(p => {
           if (p.startsWith('#')) {
               const level = p.match(/^#+/)?.[0].length || 1;
-              const clean = p.replace(/^#+\\s*/, '');
+              const clean = p.replace(/^#+\s*/, '');
               const tag = `h${Math.min(level + 1, 6)}`;
               return `<${tag}>${escapeHTML(clean)}</${tag}>`;
           }
           let html = escapeHTML(p.trim());
-          html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<span class="font-bold">$1</span>');
-          return `<p>${html}</p>`;
-      }).join('\\n');
+          html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+          // Add indentation for proper book styling
+          return `<p style="text-indent: 2em; margin-bottom: 0.6em; line-height: 1.8;">${html}</p>`;
+      }).join('\n');
   };
 
   if (outline.recommendations && Array.isArray(outline.recommendations) && outline.recommendations.length > 0) {
