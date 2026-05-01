@@ -10,7 +10,7 @@
   background-color: #fcfbf8; /* warm paper color */
   width: 100%;
   max-width: 560px; /* Standard A5 width at screen scale */
-  min-height: 795px; /* Standard A5 height (560 / 0.704) */
+  aspect-ratio: 148 / 210; /* Strict A5 proportions */
   margin: 0 auto 2rem auto;
   box-shadow: 
     0 10px 25px -5px rgba(0, 0, 0, 0.08), 
@@ -20,6 +20,7 @@
   position: relative;
   box-sizing: border-box;
   color: #2c2a29;
+  border-radius: 0 !important; /* Force no rounded corners */
 }
 
 /* Preview Header */
@@ -50,7 +51,7 @@
 
 @media print {
   @page {
-    margin: 15mm 15mm 20mm 15mm !important;
+    margin: 0 !important;
     size: 148mm 210mm;
   }
   
@@ -74,9 +75,23 @@
   .book-page-preview {
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 15mm 15mm 20mm 15mm !important; /* Move margins here to allow full-bleed cover */
     max-width: none !important;
     min-height: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .book-cover-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .book-cover-page > div {
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   .preview-header, .preview-footer {

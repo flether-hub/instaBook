@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { BookOutline } from './qwen';
+import { BookOutline } from './api';
 
 export const generateEPUB = async (
   outline: BookOutline,
@@ -10,7 +10,7 @@ export const generateEPUB = async (
 ) => {
   const zip = new JSZip();
 
-  // 1. mimetype (must be uncompressed, first file in the zip)
+  // 1. mimetype
   zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
 
   // 2. META-INF/container.xml
@@ -29,7 +29,6 @@ export const generateEPUB = async (
   if (coverBlob) {
     oebps.folder("Images")?.file("cover.jpg", coverBlob);
   } else {
-    // Fallback fetch if not provided
     try {
       let hash = 0;
       const str = outline.title || "default";
@@ -41,7 +40,7 @@ export const generateEPUB = async (
       const blob = await response.blob();
       oebps.folder("Images")?.file("cover.jpg", blob);
     } catch (err) {
-      console.warn("Failed to fetch fallback cover image for EPUB", err);
+      console.warn("Failed to fetch fallback cover image", err);
     }
   }
 
@@ -158,7 +157,6 @@ p { text-indent: 2em; margin-top: 0; margin-bottom: 1em; text-align: justify; }
 </ncx>`;
   oebps.file("toc.ncx", tocNCX);
 
-  // nav.xhtml for EPUB 3 navigation
   const navXHTML = `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="zh-CN">
 <head><title>Navigation</title></head>
@@ -206,17 +204,17 @@ ${body}
   texts.file("toc.xhtml", wrapHTML("目录", tocBody));
 
   const renderMarkdown = (text: string) => {
-      return text.split('\n\n').filter(p => p.trim()).map(p => {
+      return text.split('\\n\\n').filter(p => p.trim()).map(p => {
           if (p.startsWith('#')) {
               const level = p.match(/^#+/)?.[0].length || 1;
-              const clean = p.replace(/^#+\s*/, '');
+              const clean = p.replace(/^#+\\s*/, '');
               const tag = `h${Math.min(level + 1, 6)}`;
               return `<${tag}>${escapeHTML(clean)}</${tag}>`;
           }
           let html = escapeHTML(p.trim());
-          html = html.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold">$1</span>');
+          html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<span class="font-bold">$1</span>');
           return `<p>${html}</p>`;
-      }).join('\n');
+      }).join('\\n');
   };
 
   if (outline.recommendations && outline.recommendations.length > 0) {

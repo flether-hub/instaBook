@@ -1,6 +1,9 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function startServer() {
   const app = express();
@@ -13,19 +16,24 @@ async function startServer() {
   
   app.get("/api/test-key", async (req, res) => {
     try {
-      const apiKey = process.env.QWEN_API_KEY || process.env.VITE_QWEN_API_KEY;
+      const rawModel = (req.query.model as string);
+      // Use DashScope for all models as DeepSeek is also implemented via Alibaba
+      const apiKey = process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ ok: false, error: "API Key not configured in environment variables." });
+        return res.status(500).json({ ok: false, error: `API Key (QWEN_API_KEY) not configured in environment variables.` });
       }
 
+      let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+      let modelId = rawModel;
+      
       const payload = {
-        model: "qwen-max",
+        model: modelId,
         messages: [{ role: "user", content: "Hello" }],
         max_tokens: 10,
         temperature: 1.0
       };
 
-      const response = await fetch(`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`, {
+      const response = await fetch(baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -46,30 +54,32 @@ async function startServer() {
   });
 
   app.post("/api/login", (req, res) => {
-    const { username, password } = req.body;
+    const { password } = req.body;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminPassword) {
       return res.status(500).json({ ok: false, error: "系统未配置管理员密码" });
     }
 
-    if (username === "ADMIN" && password === adminPassword) {
+    if (password === adminPassword) {
       return res.json({ ok: true });
     } else {
-      return res.status(401).json({ ok: false, error: "用户名或密码错误" });
+      return res.status(401).json({ ok: false, error: "密码错误" });
     }
   });
 
-  app.post("/api/qwen", async (req, res) => {
+  app.post("/api/generate", async (req, res) => {
     try {
-      const apiKey = process.env.QWEN_API_KEY || process.env.VITE_QWEN_API_KEY;
+      const { stream, model, ...payload } = req.body;
+      const apiKey = process.env.QWEN_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY;
       if (!apiKey) {
         return res.status(500).json({ error: "Server configuration error: QWEN_API_KEY not found" });
       }
+      
+      let baseUrl = process.env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+      let modelId = model;
 
-      const { stream, ...payload } = req.body;
-
-      const response = await fetch(`https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`, {
+      const response = await fetch(baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,6 +87,7 @@ async function startServer() {
         },
         body: JSON.stringify({
           ...payload,
+          model: modelId,
           stream: true
         })
       });
@@ -110,7 +121,6 @@ async function startServer() {
       return res.status(500).json({ error: err.message });
     }
   });
-
 
   // === Vite Middleware for Development ===
   if (process.env.NODE_ENV !== "production") {
