@@ -1,5 +1,5 @@
 export async function onRequestPost({ request, env }: any) {
-  const apiKey = env.DEEPSEEK_API_KEY || env.QWEN_API_KEY;
+  const apiKey = env.QWEN_API_KEY || env.ALIYUN_API_KEY;
   let baseUrl = env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
   
   if (!apiKey) {

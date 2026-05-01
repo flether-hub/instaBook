@@ -2,7 +2,7 @@ export async function onRequestGet({ request, env }: any) {
   try {
     const url = new URL(request.url);
     const rawModel = url.searchParams.get("model") || "qwen-max";
-    const apiKey = env.DEEPSEEK_API_KEY || env.QWEN_API_KEY;
+    const apiKey = env.QWEN_API_KEY || env.ALIYUN_API_KEY;
     let baseUrl = env.API_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
     let modelId = rawModel;
 

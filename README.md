@@ -39,7 +39,7 @@ InstaBook Builder (AI 智能写书平台)
 后端代码主要存放在 `functions/api/` 目录下，部署在 Cloudflare 时，这部分会自动编译为服务端无服务器函数。
 
 - **`functions/api/generate.ts`**
-  AI 模型转发中枢。前端会将提示词交给该接口，接口会去环境变量中读取 `DEEPSEEK_API_KEY` 或 `QWEN_API_KEY` 并且调用对应的兼容 OpenAI API 的在线大模型生成返回流式文本 (Server-Sent Events) 到前端。由于是在服务端请求，可以非常安全地保护 API 密钥不被泄露给客户端浏览器。
+  AI 模型转发中枢。前端会将提示词交给该接口，接口会去环境变量中读取 `QWEN_API_KEY` 或 `ALIYUN_API_KEY` 并且调用对应的兼容 OpenAI API 的在线大模型生成返回流式文本 (Server-Sent Events) 到前端。由于是在服务端请求，可以非常安全地保护 API 密钥不被泄露给客户端浏览器。
   
 - **`functions/api/login.ts`**
   极其简单轻量的登陆凭证校验模块。前端提交用户填写的密码给这个 API，它校验一下是否和服务器内部设置的环境变量 `ADMIN_PASSWORD` 匹配，匹配则返回成功放行。
@@ -86,7 +86,7 @@ InstaBook Builder (AI 智能写书平台)
 ### 4. 设置运行时环境变量 (Environment Variables)
 我们的 Cloudflare Functions 后端代码依赖于几个核心环境变量运行，请务必在“部署界面”或项目部署后的“Settings (设置) -> Environment variables”中，设置以下变量并将配置存为加密（Encrypt）或纯文本格式：
 
-- `DEEPSEEK_API_KEY` 或 `QWEN_API_KEY`：填入你的大模型 API 密钥。建议配合使用 DeepSeek 等强推理高性价比模型。
+- `QWEN_API_KEY` 或 `ALIYUN_API_KEY`：填入你的大模型 API 密钥。建议配合使用阿里云百炼平台的高性价比模型（例如通义千问等）。
 - `API_BASE_URL`：（可选）如果你使用的是第三方的 API 兼容网关，可以填入请求的基础 URL。（默认为阿里云百炼网关）
 - `ADMIN_PASSWORD`：填入你自设的一个访问密码，用于网站界面的统一准入控制拦截。不设置则自动跳过验证。
 

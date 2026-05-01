@@ -90,11 +90,12 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
   return fullText;
 }
 
-export const generateBookOutline = async (topicOrTitle: string, genre: string, authorName: string, chapterCount: number, writingStyle: string, model: string, onProgress?: (text: string) => void, signal?: AbortSignal): Promise<BookOutline> => {
+export const generateBookOutline = async (topicOrTitle: string, genre: string, authorName: string, chapterCount: number, writingStyle: string, detailedRequirements: string, model: string, onProgress?: (text: string) => void, signal?: AbortSignal): Promise<BookOutline> => {
   const prompt = `你是一位专业的图书策划编辑和畅销书作家。请根据以下主题/书名：“${topicOrTitle}” 策划一本高质量的书籍大纲。
 创作题材：${genre}。
 风格要求：${writingStyle}。
 作者：${authorName || "虚构笔名"}。
+${detailedRequirements ? `额外详细要求：\n${detailedRequirements}\n` : ""}
 请严格规划出 ${chapterCount} 个章节，并为每一章提供详细的剧情/内容摘要。注意：章节标题请提供简洁、有深意的纯标题，不要包含“第x章”或“Chapter x”等字样。
 请返回 JSON 格式：
 {
@@ -150,7 +151,7 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
   }
 };
 
-export const generateChapterContent = async (bookTitle: string, genre: string, chapterTitle: string, chapterSummary: string, writingStyle: string, model: string, onProgress?: (text: string) => void, signal?: AbortSignal): Promise<string> => {
+export const generateChapterContent = async (bookTitle: string, genre: string, chapterTitle: string, chapterSummary: string, writingStyle: string, detailedRequirements: string, model: string, onProgress?: (text: string) => void, signal?: AbortSignal): Promise<string> => {
   const prompt = `你是一位职业作家。现在请直接撰写图书《${bookTitle}》的其中一个章节。
 
 背景信息：
@@ -158,6 +159,7 @@ export const generateChapterContent = async (bookTitle: string, genre: string, c
 章节名称：${chapterTitle}
 章节大纲摘要：${chapterSummary}
 书籍整体风格：${writingStyle}
+${detailedRequirements ? `书籍详细要求：\n${detailedRequirements}\n` : ""}
 
 ## 严限输出规则（违反以下规则将导致任务失败）：
 1. **禁止输出任何前言、后记、提示语、思考过程或解释性文字**。

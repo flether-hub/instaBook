@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw, Activity, AlignLeft, Cpu, User, PenTool, Hash, CircleSlash2, Play, RefreshCw } from 'lucide-react';
+import { BookOpen, Loader2, Download, Wand2, CheckCircle2, Square, Upload, Archive, RotateCcw, Activity, AlignLeft, Cpu, User, PenTool, Hash, CircleSlash2, Play, RefreshCw, FileText } from 'lucide-react';
 import { BookCover } from './components/BookCover';
 import { BookContent } from './components/BookContent';
 import { PaginatedSection } from './components/PaginatedSection';
@@ -26,6 +26,7 @@ export default function App() {
   
   const [writingStyle, setWritingStyle] = useState(() => localStorage.getItem('instabook-writingStyle') || '严谨、专业、深具启发性');
   const [targetModel, setTargetModel] = useState(() => localStorage.getItem('instabook-targetModel') || 'deepseek-v4-pro');
+  const [detailedRequirements, setDetailedRequirements] = useState(() => localStorage.getItem('instabook-detailedRequirements') || '');
 
   // Persistence for inputs
   useEffect(() => {
@@ -35,7 +36,8 @@ export default function App() {
     localStorage.setItem('instabook-genre', genre);
     localStorage.setItem('instabook-writingStyle', writingStyle);
     localStorage.setItem('instabook-targetModel', targetModel);
-  }, [topic, authorName, wordCount, genre, writingStyle, targetModel]);
+    localStorage.setItem('instabook-detailedRequirements', detailedRequirements);
+  }, [topic, authorName, wordCount, genre, writingStyle, targetModel, detailedRequirements]);
 
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
     const [isResuming, setIsResuming] = useState(false);
@@ -232,7 +234,7 @@ export default function App() {
     try {
       abortControllerRef.current = new AbortController();
       addLog('正在生成大纲与章节结构...', 'info');
-      const generatedOutline = await generateBookOutline(topic, genre, authorName, chapterCount, writingStyle, targetModel, (text) => {
+      const generatedOutline = await generateBookOutline(topic, genre, authorName, chapterCount, writingStyle, detailedRequirements, targetModel, (text) => {
         setOutlineProgressText(text);
       }, abortControllerRef.current.signal);
       addLog('书籍大纲策划完成！', 'success');
@@ -294,6 +296,7 @@ export default function App() {
             chapters[i].title,
             chapters[i].summary,
             writingStyle,
+            detailedRequirements,
             targetModel,
             (text) => {
               contentBufferRef.current = text;
@@ -755,6 +758,7 @@ export default function App() {
     }
 
     // Table of Contents
+    const tocStartPage = currentPage;
     const chaptersPerTocPage = 15;
     const tocPagesNeeded = Math.max(1, Math.ceil(((outline.chapters || []).length) / chaptersPerTocPage));
     currentPage += tocPagesNeeded;
@@ -778,11 +782,11 @@ export default function App() {
       return { title: chap.title, page: startPage };
     });
 
-    return { intro: introStartPage, chapters: chaptersToC };
+    return { tocStart: tocStartPage, intro: introStartPage, chapters: chaptersToC };
   };
 
   const estimatedPages = React.useMemo(() => {
-    return outline ? estimatePageNumbers() : { intro: 1, chapters: [] };
+    return outline ? estimatePageNumbers() : { tocStart: 1, intro: 1, chapters: [] };
   }, [outline, completedChapters, actualPageCounts]);
 
   if (isCheckingAutoLogin) {
@@ -895,12 +899,32 @@ export default function App() {
           <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight text-stone-900">瞬间创作一部完整书籍</h2>
           <p className="text-xl text-stone-500 mb-12 max-w-xl mx-auto">只需输入书名或主题，AI 将为您生成包含完整目录、正文章节、封面及出版信息的标准 A5 (148x210mm) 图书。</p>
           <div className="bg-white p-6 rounded-2xl shadow-xl shadow-stone-200/50 flex flex-col gap-5 border border-stone-100 text-left">
-            <div className="flex flex-col md:flex-row gap-5 mb-5 md:mb-0">
+            <div className="flex flex-col md:flex-row gap-5">
               <div className="flex-[2]"><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><BookOpen className="w-4 h-4 text-stone-400" />书名或主题</label><input type="text" className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" placeholder="例如：量子计算发展史..." value={topic} onChange={(e) => setTopic(e.target.value)} disabled={isGeneratingOutline} /></div>
               <div className="flex-1"><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><AlignLeft className="w-4 h-4 text-stone-400" />创作题材</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={genre} onChange={(e) => setGenre(e.target.value)} disabled={isGeneratingOutline}>{genres.map((g) => (<option key={g.name} value={g.value}>{g.name}</option>))}</select></div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><PenTool className="w-4 h-4 text-stone-400" />文笔风格</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={writingStyle} onChange={(e) => setWritingStyle(e.target.value)} disabled={isGeneratingOutline}>{styles.map((s) => (<option key={s.name} value={s.value}>{s.name}</option>))}</select></div>
+              <div><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><User className="w-4 h-4 text-stone-400" />作者署名</label><input type="text" className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" placeholder="署名/笔名..." value={authorName} onChange={(e) => setAuthorName(e.target.value)} disabled={isGeneratingOutline} /></div>
+            </div>
+
+            <div className="w-full">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2">
+                <FileText className="w-4 h-4 text-stone-400" />详细要求 (选填，最多1000字)
+              </label>
+              <textarea 
+                className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50 resize-y min-h-[80px]" 
+                placeholder="例如：请在故事中加入科幻元素，或者要求第一人称视角..." 
+                value={detailedRequirements} 
+                onChange={(e) => setDetailedRequirements(e.target.value)} 
+                maxLength={1000}
+                disabled={isGeneratingOutline} 
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><Hash className="w-4 h-4 text-stone-400" />总字数</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={wordCount} onChange={(e) => setWordCount(Number(e.target.value))} disabled={isGeneratingOutline}><option value={2000}>极短篇 (~2千字)</option><option value={5000}>短篇 (~5千字)</option><option value={10000}>短篇 (~1万字)</option><option value={30000}>中篇 (~3万字)</option><option value={50000}>长篇 (~5万字)</option><option value={100000}>巨著 (~10万字)</option></select></div>
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2">
                   <Cpu className="w-4 h-4 text-stone-400" />AI 模型
@@ -913,11 +937,9 @@ export default function App() {
                 >
                   <option value="deepseek-v4-pro">deepseek-v4-pro</option>
                   <option value="qwen3.6-plus">qwen3.6-plus</option>
+                  <option value="glm-5.1">glm-5.1</option>
                 </select>
               </div>
-              <div><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><User className="w-4 h-4 text-stone-400" />作者署名</label><input type="text" className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" placeholder="署名/笔名..." value={authorName} onChange={(e) => setAuthorName(e.target.value)} disabled={isGeneratingOutline} /></div>
-              <div><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><PenTool className="w-4 h-4 text-stone-400" />文笔风格</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={writingStyle} onChange={(e) => setWritingStyle(e.target.value)} disabled={isGeneratingOutline}>{styles.map((s) => (<option key={s.name} value={s.value}>{s.name}</option>))}</select></div>
-              <div><label className="flex items-center gap-1.5 text-sm font-medium text-stone-700 mb-2"><Hash className="w-4 h-4 text-stone-400" />总字数</label><select className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:ring-2 focus:ring-stone-900 transition-shadow disabled:opacity-50" value={wordCount} onChange={(e) => setWordCount(Number(e.target.value))} disabled={isGeneratingOutline}><option value={2000}>极短篇 (~2千字)</option><option value={5000}>短篇 (~5千字)</option><option value={10000}>短篇 (~1万字)</option><option value={30000}>中篇 (~3万字)</option><option value={50000}>长篇 (~5万字)</option><option value={100000}>巨著 (~10万字)</option></select></div>
             </div>
             
             <div className="flex flex-row gap-3 mt-4">
@@ -1109,7 +1131,7 @@ export default function App() {
                       );
                     })}
                   </div>
-                  <div className="preview-footer">— 目录 —</div>
+                  <div className="preview-footer">— {estimatedPages.tocStart + p} —</div>
                 </div>
               );
             }
