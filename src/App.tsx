@@ -970,7 +970,31 @@ export default function App() {
             </div>
             <div className="space-y-4">
               <div className="flex flex-col gap-2"><div className="flex items-center gap-4">{isGeneratingOutline ? (<Loader2 className="w-5 h-5 animate-spin text-stone-400" />) : (<CheckCircle2 className="w-5 h-5 text-emerald-500" />)}<span className={isGeneratingOutline ? "text-stone-600" : "text-stone-900 font-medium"}>正在策划出版大纲与章节结构</span></div>{isGeneratingOutline && outlineProgressText && ( <div className="ml-9 p-3 bg-stone-50 rounded-lg border border-stone-200 max-h-40 overflow-y-auto w-full max-w-[calc(100%-2.25rem)]"><pre className="text-xs text-stone-500 whitespace-pre-wrap font-mono overflow-x-hidden w-full">{outlineProgressText}</pre></div> )}</div>
-              {outline && (outline.chapters || []).map((chap, idx) => (<div key={idx} className="flex items-center gap-4 text-sm md:text-base">{completedChapters.includes(idx) ? ( <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> ) : generatingChapterIdx === idx ? ( <Loader2 className="w-5 h-5 animate-spin text-emerald-500 shrink-0" /> ) : ( <div className="w-5 h-5 border-2 border-stone-200 rounded-full shrink-0" /> )}<span className={ completedChapters.includes(idx) ? "text-stone-900 font-medium" : generatingChapterIdx === idx ? "text-emerald-700 font-medium" : "text-stone-400" }>第 {idx + 1} 章：{chap.title}</span></div>))}
+              {outline && (outline.chapters || []).map((chap, idx) => {
+                const isCompleted = completedChapters.includes(idx);
+                const isGenerating = generatingChapterIdx === idx;
+                const content = chaptersContent[idx] || "";
+                let pageText = "";
+                if (isCompleted || isGenerating) {
+                  const startPage = estimatedPages.chapters[idx]?.page || 1;
+                  const currentPagesCount = Math.max(1, splitIntoPages(content, false, true).length);
+                  const endPage = startPage + currentPagesCount - 1;
+                  if (isCompleted) {
+                    pageText = startPage === endPage ? `(第 ${startPage} 页)` : `(第 ${startPage}-${endPage} 页)`;
+                  } else {
+                    pageText = `(正在撰写第 ${endPage} 页...)`;
+                  }
+                }
+                return (
+                  <div key={idx} className="flex items-center gap-4 text-sm md:text-base">
+                    {isCompleted ? ( <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> ) : isGenerating ? ( <Loader2 className="w-5 h-5 animate-spin text-emerald-500 shrink-0" /> ) : ( <div className="w-5 h-5 border-2 border-stone-200 rounded-full shrink-0" /> )}
+                    <span className={ isCompleted ? "text-stone-900 font-medium" : isGenerating ? "text-emerald-700 font-medium" : "text-stone-400" }>
+                      第 {idx + 1} 章：{chap.title}
+                      {pageText && <span className="ml-3 text-xs opacity-60 font-normal">{pageText}</span>}
+                    </span>
+                  </div>
+                );
+              })}
               
               {/* Detailed AI Process Logs */}
               <div className="mt-8 pt-6 border-t border-stone-100">
