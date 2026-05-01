@@ -178,6 +178,14 @@ export default function App() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showContinueModal, setShowContinueModal] = useState(false);
+  const [actualPageCounts, setActualPageCounts] = useState<Record<string, number>>({});
+
+  const handlePageCountCalculated = React.useCallback((id: string, count: number) => {
+    setActualPageCounts(prev => {
+      if (prev[id] === count) return prev;
+      return { ...prev, [id]: count };
+    });
+  }, []);
   const [exportProgress, setExportProgress] = useState({ isExporting: false, text: "", percent: 0 });
 
   const testApiKey = async () => {
@@ -740,9 +748,9 @@ export default function App() {
     
     // Recommendations
     if (outline.recommendations && Array.isArray(outline.recommendations)) {
-      outline.recommendations.forEach(rec => {
-        const pages = splitIntoPages(rec.content);
-        currentPage += pages.length;
+      outline.recommendations.forEach((rec, idx) => {
+        const pages = actualPageCounts[`rec-${idx}`] || splitIntoPages(rec.content).length;
+        currentPage += pages;
       });
     }
 
@@ -753,7 +761,7 @@ export default function App() {
 
     // Intro
     const introStartPage = currentPage;
-    const introPages = splitIntoPages(outline.introduction || "", true).length;
+    const introPages = actualPageCounts['intro'] || splitIntoPages(outline.introduction || "", true).length;
     currentPage += introPages;
 
     // Chapters
@@ -764,7 +772,7 @@ export default function App() {
       // (the summary length) to keep the TOC page numbers from "shaking" or
       // jumping token by token. We only use the real content once it's fully completed.
       const content = completedChapters.includes(idx) ? chaptersContent[idx] : (chap.summary || "");
-      const chapPages = Math.max(1, splitIntoPages(content, false, true).length);
+      const chapPages = actualPageCounts[`chap-${idx}`] || Math.max(1, splitIntoPages(content, false, true).length);
       
       currentPage += chapPages;
       return { title: chap.title, page: startPage };
@@ -775,7 +783,7 @@ export default function App() {
 
   const estimatedPages = React.useMemo(() => {
     return outline ? estimatePageNumbers() : { intro: 1, chapters: [] };
-  }, [outline, completedChapters]);
+  }, [outline, completedChapters, actualPageCounts]);
 
   if (isCheckingAutoLogin) {
     return (
@@ -1060,6 +1068,7 @@ export default function App() {
                    startPageCounter={startCount}
                    sectionHeader={header}
                    sectionFooter={footer}
+                   onPagesCalculated={(count) => handlePageCountCalculated(`rec-${idx}`, count)}
                  />
               );
             });
@@ -1115,6 +1124,7 @@ export default function App() {
                    outlineTitle={outline.title} 
                    startPageCounter={estimatedPages.intro}
                    sectionHeader={header}
+                   onPagesCalculated={(count) => handlePageCountCalculated('intro', count)}
                  />
              );
           })()}
@@ -1164,6 +1174,7 @@ export default function App() {
                    startPageCounter={chapterStartPage}
                    sectionHeader={header}
                    isLoading={generatingChapterIdx === idx}
+                   onPagesCalculated={(count) => handlePageCountCalculated(`chap-${idx}`, count)}
                  />
               );
           })}
