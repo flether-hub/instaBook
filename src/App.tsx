@@ -780,8 +780,8 @@ export default function App() {
   });
   const [geminiReal, setGeminiReal] = useState(() => {
     const val = localStorage.getItem("instabook-realmodel-gemini-2.5-pro");
-    if (!val || val.trim() === "" || val === "gemini-2.5-pro" || val === "gemini-1.5-pro") {
-      return "gemini-3.5-flash";
+    if (!val || val.trim() === "" || val === "gemini-2.5-pro" || val === "gemini-1.5-pro" || val === "gemini-3.5-flash") {
+      return "gemini-1.5-flash";
     }
     return val;
   });
@@ -828,14 +828,14 @@ export default function App() {
           }
           if (data["instabook-realmodel-gemini-2.5-pro"]) {
             const val = data["instabook-realmodel-gemini-2.5-pro"].trim();
-            const finalVal = (!val || val === "gemini-2.5-pro" || val === "gemini-1.5-pro") ? "gemini-3.5-flash" : val;
+            const finalVal = (!val || val === "gemini-2.5-pro" || val === "gemini-1.5-pro" || val === "gemini-3.5-flash") ? "gemini-1.5-flash" : val;
             setGeminiReal(finalVal);
             localStorage.setItem("instabook-realmodel-gemini-2.5-pro", finalVal);
             localStorage.setItem("instabook-realmodel-gemini-1.5-pro", finalVal);
           } else {
-            setGeminiReal("gemini-3.5-flash");
-            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", "gemini-3.5-flash");
-            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", "gemini-3.5-flash");
+            setGeminiReal("gemini-1.5-flash");
+            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", "gemini-1.5-flash");
+            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", "gemini-1.5-flash");
           }
           if (data["instabook-apikey-qwen"]) {
             setQwenKey(data["instabook-apikey-qwen"]);
@@ -1084,7 +1084,7 @@ export default function App() {
       modelNameLabel = `DeepSeek 官方模型 (${dsReal})`;
     } else if (targetModel === "qwen3.6-plus") {
       modelNameLabel = `阿里百炼大模型 (${qwenReal})`;
-    } else if (targetModel === "gemini-2.5-pro" || targetModel === "gemini-1.5-pro") {
+    } else if (targetModel === "gemini-1.5-pro") {
       modelNameLabel = `Gemini 官方模型 (${geminiReal})`;
     }
 
@@ -2241,13 +2241,11 @@ export default function App() {
                                 `DeepSeek 官方模型 (${dsReal}) (已激活)`}
                               {targetModel === "qwen3.6-plus" &&
                                 `阿里百炼大模型 (${qwenReal}) (已激活)`}
-                              {(targetModel === "gemini-2.5-pro" ||
-                                targetModel === "gemini-1.5-pro") &&
+                              {(targetModel === "gemini-1.5-pro") &&
                                 `Gemini 官方模型 (${geminiReal}) (已激活)`}
                               {![
                                 "deepseek-v4-pro",
                                 "qwen3.6-plus",
-                                "gemini-2.5-pro",
                                 "gemini-1.5-pro",
                               ].includes(targetModel) &&
                                 `${targetModel} (已激活)`}
@@ -3503,15 +3501,14 @@ export default function App() {
                         <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                         Gemini
                       </h4>
-                      {configActiveModel === "gemini-2.5-pro" ||
-                      configActiveModel === "gemini-1.5-pro" ? (
+                      {configActiveModel === "gemini-1.5-pro" ? (
                         <span className="px-2 py-0.5 bg-emerald-500 text-white text-[10px] md:text-[11px] font-bold rounded-lg shadow-xs flex items-center gap-1 shrink-0">
                           <CheckCircle2 className="w-3 h-3" /> 已激活
                         </span>
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setConfigActiveModel("gemini-2.5-pro")}
+                          onClick={() => setConfigActiveModel("gemini-1.5-pro")}
                           className="px-2 py-0.5 bg-white hover:bg-stone-100 text-stone-600 text-[11px] font-semibold rounded-lg border border-stone-200 transition-colors cursor-pointer shrink-0"
                         >
                           设为激活
@@ -3540,7 +3537,7 @@ export default function App() {
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
                           value={geminiReal}
                           onChange={(e) => setGeminiReal(e.target.value)}
-                          placeholder="gemini-3.5-flash"
+                          placeholder="gemini-1.5-flash"
                         />
                       </div>
                     </div>

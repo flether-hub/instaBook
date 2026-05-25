@@ -9,7 +9,7 @@ export async function onRequestPost({ request, env }: any) {
     let baseUrl = clientBaseUrl || "";
     if (!baseUrl) {
       if (modelId.toLowerCase().includes("gemini")) {
-        baseUrl = "https://generativelanguage.googleapis.com/v1beta/chat/completions";
+        baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
       } else if (modelId.toLowerCase().includes("deepseek")) {
         baseUrl = "https://api.deepseek.com/v1/chat/completions";
       } else if (modelId.toLowerCase().includes("glm")) {
@@ -34,9 +34,13 @@ export async function onRequestPost({ request, env }: any) {
     };
 
     const cleanKey = apiKey.replace(/^"|"$/g, '').trim();
-    if (baseUrl.includes("generativelanguage")) {
+    if (baseUrl.includes("generativelanguage/v1beta/openai")) {
+      headers["Authorization"] = `Bearer ${cleanKey}`;
+    } else if (baseUrl.includes("generativelanguage")) {
       headers["x-goog-api-key"] = cleanKey;
-      baseUrl = `${baseUrl.split('?')[0]}?key=${cleanKey}`;
+      if (!baseUrl.includes("?key=")) {
+        baseUrl = `${baseUrl.split('?')[0]}?key=${cleanKey}`;
+      }
     } else {
       headers["Authorization"] = `Bearer ${cleanKey}`;
     }

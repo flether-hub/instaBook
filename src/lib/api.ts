@@ -29,7 +29,7 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
   const m = model.toLowerCase();
   if (m.includes("gemini")) {
     clientApiKey = localStorage.getItem("instabook-apikey-gemini") || "";
-    clientBaseUrl = "https://generativelanguage.googleapis.com/v1beta/chat/completions";
+    clientBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
     realModel = localStorage.getItem(`instabook-realmodel-${model}`) || model;
   } else if (m.includes("deepseek")) {
     clientApiKey = localStorage.getItem("instabook-apikey-deepseek") || "";
@@ -48,17 +48,10 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
 
   const payload: any = {
     messages: [{ role: "user", content: prompt }],
-    max_tokens: 8192,
+    max_tokens: 4096,
     temperature: 1.0,
     model: realModel
   };
-  
-  if (clientApiKey) {
-    payload.clientApiKey = clientApiKey;
-  }
-  if (clientBaseUrl) {
-    payload.clientBaseUrl = clientBaseUrl;
-  }
   
   if (isJson) {
     // Both DeepSeek and Qwen support json_object in their chat completion.
@@ -70,9 +63,13 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
   };
 
   const cleanKey = clientApiKey.replace(/^"|"$/g, '').trim();
-  if (clientBaseUrl.includes("generativelanguage")) {
+  if (clientBaseUrl.includes("generativelanguage/v1beta/openai")) {
+    headers["Authorization"] = `Bearer ${cleanKey}`;
+  } else if (clientBaseUrl.includes("generativelanguage")) {
     headers["x-goog-api-key"] = cleanKey;
-    clientBaseUrl = `${clientBaseUrl.split('?')[0]}?key=${cleanKey}`;
+    if (!clientBaseUrl.includes("?key=")) {
+      clientBaseUrl = `${clientBaseUrl.split('?')[0]}?key=${cleanKey}`;
+    }
   } else {
     headers["Authorization"] = `Bearer ${cleanKey}`;
   }
@@ -192,7 +189,7 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
     const m = model.toLowerCase();
     if (m.includes("gemini")) {
       clientApiKey = localStorage.getItem("instabook-apikey-gemini") || "";
-      clientBaseUrl = "https://generativelanguage.googleapis.com/v1beta/chat/completions";
+      clientBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
       realModel = localStorage.getItem(`instabook-realmodel-${model}`) || model;
     } else if (m.includes("deepseek")) {
       clientApiKey = localStorage.getItem("instabook-apikey-deepseek") || "";
@@ -218,9 +215,13 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
     }
 
     const cleanKey = clientApiKey.replace(/^"|"$/g, '').trim();
-    if (clientBaseUrl.includes("generativelanguage")) {
+    if (clientBaseUrl.includes("generativelanguage/v1beta/openai")) {
+      headers["Authorization"] = `Bearer ${cleanKey}`;
+    } else if (clientBaseUrl.includes("generativelanguage")) {
       headers["x-goog-api-key"] = cleanKey;
-      clientBaseUrl = `${clientBaseUrl.split('?')[0]}?key=${cleanKey}`;
+      if (!clientBaseUrl.includes("?key=")) {
+        clientBaseUrl = `${clientBaseUrl.split('?')[0]}?key=${cleanKey}`;
+      }
     } else {
       headers["Authorization"] = `Bearer ${cleanKey}`;
     }
