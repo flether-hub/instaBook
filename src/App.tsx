@@ -799,13 +799,6 @@ export default function App() {
       "qwen-max",
   );
 
-  const [backendKeys, setBackendKeys] = useState<{
-    gemini?: boolean;
-    deepseek?: boolean;
-    glm?: boolean;
-    qwen?: boolean;
-  }>({});
-
   const loadSystemSettings = () => {
     // Fetch stored settings from server database
     fetch("/api/settings")
@@ -862,7 +855,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    setBackendKeys({ gemini: false, deepseek: false, glm: false, qwen: false });
     loadSystemSettings();
   }, []);
 
@@ -870,31 +862,25 @@ export default function App() {
     if (!modelName) return false;
     const m = modelName.toLowerCase();
     if (m.includes("gemini")) {
-      return !!geminiKey || !!backendKeys.gemini;
+      return !!geminiKey;
     }
     if (m.includes("deepseek")) {
-      return !!dsKey || !!backendKeys.deepseek;
+      return !!dsKey;
     }
     if (m.includes("glm")) {
       const customKey =
         localStorage.getItem(`instabook-apikey-${modelName}`) ||
         localStorage.getItem("instabook-apikey-glm");
-      return !!customKey || !!backendKeys.glm;
+      return !!customKey;
     }
     if (m.includes("qwen")) {
-      return !!qwenKey || !!backendKeys.qwen;
+      return !!qwenKey;
     }
-    const hasAnyBackendKey =
-      backendKeys.gemini ||
-      backendKeys.deepseek ||
-      backendKeys.glm ||
-      backendKeys.qwen;
     return (
       !!dsKey ||
       !!geminiKey ||
       !!qwenKey ||
-      !!localStorage.getItem("instabook-apikey-glm") ||
-      !!hasAnyBackendKey
+      !!localStorage.getItem("instabook-apikey-glm")
     );
   };
 

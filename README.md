@@ -7,7 +7,35 @@ InstaBook Builder (AI 智能写书平台)
 
 ## 目录结构与核心代码文件说明
 
-为了方便在 GitHub 上开源以及让开发者二次开发，下面详细解释项目中各个源码文件及其具体作用。
+为了方便在 GitHub 上开源以及让开发者二次开发，本平台共有 **18 个** 核心源码文件，总计 **5,771 行代码**（不计 package-lock.json等生成文件）。
+
+下面是该项目各源文件的行数统计及具体作用：
+
+### 📊 代码行数统计 (Lines of Code)
+
+| 文件夹 / 模块 | 核心源码文件 | 代码行数 (LOC) | 职责与功能描述 |
+| :--- | :--- | :---: | :--- |
+| **前端主页面** | `src/App.tsx` | 3,882 行 | AI 串行写书逻辑、PDF预览打断渲染、流程状态、管理界面控制中枢 |
+|  | `src/main.tsx` | 10 行 | React 顶层实例化与入口挂载 |
+|  | `src/index.css` | 194 行 | 封面/书页仿真双栏、印刷级排版样式及全局 Tailwind 配置 |
+| **前端组件** | `src/components/BookCover.tsx` | 161 行 | 生成高仿真、多种古风与现代风格的书籍精美封面及横幅挂盒组件 |
+|  | `src/components/PaginatedSection.tsx` | 107 行 | 核心分页逻辑，正文动态纸质感排版、高度折算、生成页码/页眉 |
+|  | `src/components/BookContent.tsx` | 53 行 | 基本的文章 Markdown 一体化内容组件（前言无分页展示） |
+| **工具与 API**| `src/lib/api.ts` | 279 行 | 前端与后端 RPC API 路由调用的集成库、流式输出过滤器 |
+|  | `src/lib/epub.ts` | 248 行 | 在浏览器内原生实例化带有文件包结构的 `.epub` 构建导出机制 |
+|  | `src/lib/db.ts` | 154 行 | 本地浏览器快照暂存、与后端持久化多用户数据库的同步桥梁 |
+| **服务端 API**| `functions/api/generate.ts` | 73 行 | AI 生成大纲及正文章节流式转发 API（隐藏并封装服务器 Key） |
+|  | `functions/api/settings.ts` | 66 行 | 系统后台配置的后端读取与修改 API 路由 |
+|  | `functions/api/test-key.ts` | 65 行 | 管理端一键测试 API 密钥与大模型接通情况的路由接口 |
+|  | `functions/api/login.ts` | 33 行 | 简易的高安全性管理面板验证密码校验端点 |
+|  | `functions/api/env-keys.ts` | 12 行 | 用于检测系统环境变量存在情况的后端检测接口 |
+| **环境构建** | `server.ts` | 364 行 | 本地调试运行环境的代理轻量 Express 服务器启动脚本 |
+|  | `vite.config.ts` | 21 行 | 前端构建工具 Vite 配置文件 |
+|  | `package.json` | 43 行 | Node.js 项目依赖包描述文件 |
+|  | `metadata.json` | 6 行 | AI Studio Applet 平台配置声明 |
+| **总计统计** | **18 个核心文件** | **5,771 行** | **轻量化的高性能全栈写书系统** |
+
+---
 
 ### 1. 前端（React + Vite）
 前端代码主要存放在 `src/` 目录下：

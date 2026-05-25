@@ -168,15 +168,6 @@ async function startServer() {
     }
   });
 
-  app.get("/api/env-keys", (req, res) => {
-    res.json({
-      gemini: false,
-      deepseek: false,
-      glm: false,
-      qwen: false
-    });
-  });
-
   app.get("/api/test-key", async (req, res) => {
     try {
       const rawModel = (req.query.model as string) || "qwen-max";
