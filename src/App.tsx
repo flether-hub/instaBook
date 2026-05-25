@@ -1129,7 +1129,7 @@ export default function App() {
         errorMessage.includes("not found in environment variables")
       ) {
         errorMessage =
-          "API Key 无效或未配置。请检查部署环境中的环境变量（DEEPSEEK_API_KEY, QWEN_API_KEY 等）配置是否正确。";
+          "API Key 无效或未配置。请点击右上角进入「管理员配置」重新设置可用的 API Key、自定义模型名或检测接通状态。";
       }
       alert(`生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
       setIsGeneratingOutline(false);
