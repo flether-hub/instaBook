@@ -1,0 +1,22 @@
+2623-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+2624:                  书籍操作
+2625-                </span>
+2626-
+2627-                <div className="flex items-center gap-2">
+2628-                  {/* Return to Home Button */}
+2629-                  <motion.button
+2630-                    whileHover={{ scale: 1.06, y: -0.5 }}
+2631-                    whileTap={{ scale: 0.94 }}
+2632-                    onClick={handleReturnHome}
+2633-                    title="退回首页"
+2634-                    className="w-9.5 h-9.5 text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-50 border border-stone-200 hover:border-stone-300 rounded-xl flex items-center justify-center transition-all shadow-3xs cursor-pointer"
+2635-                  >
+2636-                    <ArrowLeft className="w-4.5 h-4.5 text-stone-600" />
+2637-                  </motion.button>
+2638-
+2639-                  {/* Resume Button */}
+2640-                  {isInterrupted && (
+2641-                    <motion.button
+2642-                      whileHover={{ scale: 1.08, y: -0.5 }}
+2643-                      whileTap={{ scale: 0.92 }}
+2644-                      onClick={resumeGeneration}

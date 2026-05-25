@@ -1,0 +1,6 @@
+{
+  "name": "瞬书 InstaBook",
+  "description": "An AI-powered web app that generates complete, structured books from a title and allows downloading them as beautiful formatted PDFs ready for print.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

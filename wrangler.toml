@@ -1,0 +1,20 @@
+# Cloudflare Pages / Workers configuration file
+# This file is used by wrangler to deploy and automatically configure services
+
+name = "instabook"
+compatibility_date = "2024-03-01"
+pages_build_output_dir = "dist"
+
+# 1. 绑定的 D1 关系型数据库 (Cloudflare D1 SQL Database)
+# 部署后可以使用 env.DB 调用 D1 进行原子级存盘
+[[d1_databases]]
+binding = "DB"
+database_name = "instabook-db"
+# 用户在 Cloudflare 后台创建数据库后，将其生成的 UUID 填入下方
+database_id = "84c25475-738c-4bed-b859-c363e1dd8ba1"
+migrations_dir = "migrations"
+
+# 2. 环境变量 (例如：密钥和系统配置选项)
+[vars]
+NODE_ENV = "production"
+
