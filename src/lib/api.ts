@@ -58,27 +58,19 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
     payload.response_format = { type: "json_object" };
   }
 
-  let headers: any = {
-    "Content-Type": "application/json"
-  };
-
   const cleanKey = clientApiKey.replace(/^"|"$/g, '').trim();
-  if (clientBaseUrl.includes("generativelanguage/v1beta/openai")) {
-    headers["Authorization"] = `Bearer ${cleanKey}`;
-  } else if (clientBaseUrl.includes("generativelanguage")) {
-    headers["x-goog-api-key"] = cleanKey;
-    if (!clientBaseUrl.includes("?key=")) {
-      clientBaseUrl = `${clientBaseUrl.split('?')[0]}?key=${cleanKey}`;
-    }
-  } else {
-    headers["Authorization"] = `Bearer ${cleanKey}`;
-  }
-
-  const response = await fetch(clientBaseUrl, {
+  
+  // Change here: Call local backend proxy instead of calling providers directly
+  // This solves CORS and Authorization header issues on browsers
+  const response = await fetch("/api/generate", {
     method: 'POST',
-    headers,
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       ...payload,
+      clientApiKey: cleanKey,
+      clientBaseUrl: clientBaseUrl,
       stream: true
     }),
     signal: signal
@@ -215,29 +207,15 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
     }
 
     const cleanKey = clientApiKey.replace(/^"|"$/g, '').trim();
-    if (clientBaseUrl.includes("generativelanguage/v1beta/openai")) {
-      headers["Authorization"] = `Bearer ${cleanKey}`;
-    } else if (clientBaseUrl.includes("generativelanguage")) {
-      headers["x-goog-api-key"] = cleanKey;
-      if (!clientBaseUrl.includes("?key=")) {
-        clientBaseUrl = `${clientBaseUrl.split('?')[0]}?key=${cleanKey}`;
-      }
-    } else {
-      headers["Authorization"] = `Bearer ${cleanKey}`;
-    }
-
-    const payload = {
+    
+    // Call backend proxy for testing as well
+    const queryParams = new URLSearchParams({
       model: realModel,
-      messages: [{ role: "user", content: "Hello" }],
-      max_tokens: 10,
-      temperature: 1.0
-    };
-
-    const res = await fetch(clientBaseUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload)
+      clientApiKey: cleanKey,
+      clientBaseUrl: clientBaseUrl
     });
+
+    const res = await fetch(`/api/test-key?${queryParams.toString()}`);
     
     if (!res.ok) {
       const err = await res.text();
@@ -249,7 +227,8 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
       return { ok: false, error: errorMsg };
     }
     
-    return { ok: true, message: "API Key is valid and working." };
+    const data = await res.json();
+    return { ok: data.ok, message: data.message, error: data.error };
   } catch (e: any) {
     return { ok: false, error: e.message };
   }

@@ -781,7 +781,7 @@ export default function App() {
   const [geminiReal, setGeminiReal] = useState(() => {
     const val = localStorage.getItem("instabook-realmodel-gemini-2.5-pro");
     if (!val || val.trim() === "" || val === "gemini-2.5-pro" || val === "gemini-1.5-pro" || val === "gemini-3.5-flash") {
-      return "gemini-1.5-flash";
+      return "gemini-3.5-flash";
     }
     return val;
   });
@@ -828,14 +828,14 @@ export default function App() {
           }
           if (data["instabook-realmodel-gemini-2.5-pro"]) {
             const val = data["instabook-realmodel-gemini-2.5-pro"].trim();
-            const finalVal = (!val || val === "gemini-2.5-pro" || val === "gemini-1.5-pro" || val === "gemini-3.5-flash") ? "gemini-1.5-flash" : val;
+            const finalVal = (!val || val === "gemini-2.5-pro" || val === "gemini-1.5-pro" || val === "gemini-3.5-flash") ? "gemini-3.5-flash" : val;
             setGeminiReal(finalVal);
             localStorage.setItem("instabook-realmodel-gemini-2.5-pro", finalVal);
             localStorage.setItem("instabook-realmodel-gemini-1.5-pro", finalVal);
           } else {
-            setGeminiReal("gemini-1.5-flash");
-            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", "gemini-1.5-flash");
-            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", "gemini-1.5-flash");
+            setGeminiReal("gemini-3.5-flash");
+            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", "gemini-3.5-flash");
+            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", "gemini-3.5-flash");
           }
           if (data["instabook-apikey-qwen"]) {
             setQwenKey(data["instabook-apikey-qwen"]);
@@ -960,13 +960,18 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) {
-          console.error("Failed to sync settings with Cloudflare/Server");
+          const errData = await res.json();
+          console.error("Failed to sync settings with Cloudflare/Server", errData);
+          alert("⚠️ 配置同步到服务器失败: " + (errData.error || "未知原因，请检查数据库绑定"));
+        } else {
+          alert("✅ 配置已成功保存并同步到服务器数据库！");
         }
       })
       .catch((err) => {
         console.error("Network error syncing settings with Cloudflare/Server:", err);
+        alert("❌ 同步出错: " + err.message);
       });
 
     setShowConfigModal(false);
@@ -3537,7 +3542,7 @@ export default function App() {
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
                           value={geminiReal}
                           onChange={(e) => setGeminiReal(e.target.value)}
-                          placeholder="gemini-1.5-flash"
+                          placeholder="gemini-3.5-flash"
                         />
                       </div>
                     </div>
