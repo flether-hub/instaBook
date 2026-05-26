@@ -34,6 +34,7 @@ import {
   Lock,
   Unlock,
   Maximize2,
+  AlertCircle,
 } from "lucide-react";
 import { BookCover } from "./components/BookCover";
 import { BookContent } from "./components/BookContent";
@@ -206,11 +207,11 @@ export default function App() {
   };
 
   const deleteDatabaseBook = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `确定要彻底删除该作品在后台数据库及本地的历史记录吗？《${name}》`,
-      )
-    ) {
+    const confirmed = await showCustomConfirm(
+      "彻底删除确认",
+      `确定要彻底删除该作品在后台数据库及本地的历史记录吗？《${name}》`
+    );
+    if (!confirmed) {
       return;
     }
     try {
@@ -240,17 +241,17 @@ export default function App() {
         localStorage.removeItem("instabook-currentBookId");
       }
     } catch (err: any) {
-      alert("删除时遇到错误: " + err.message);
+      await showCustomAlert("删除失败", "删除时遇到错误: " + err.message);
     }
   };
 
-  const deleteLocalBook = (id: string, title: string, e: React.MouseEvent) => {
+  const deleteLocalBook = async (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      !confirm(
-        `确定要从本地浏览器缓存中删除未完成的书籍《${title}》吗？该草稿未保存在系统数据库。`
-      )
-    ) {
+    const confirmed = await showCustomConfirm(
+      "删除确认",
+      `确定要从本地浏览器缓存中删除未完成的书籍《${title}》吗？该草稿未保存在系统数据库。`
+    );
+    if (!confirmed) {
       return;
     }
     try {
@@ -271,11 +272,33 @@ export default function App() {
       }
       addLog(`已从本地浏览器存储中删除未完成作品：《${title}》`, "info");
     } catch (err: any) {
-      alert("删除本地书籍时遇到错误: " + err.message);
+      await showCustomAlert("删除本地书籍失败", "删除本地书籍时遇到错误: " + err.message);
     }
   };
 
   const handleLoadBook = async (bookId: string) => {
+    // 检查是否有正在制作的书籍
+    if (isGeneratingOutline || generatingChapterIdx !== null) {
+      const interrupt = await showInterruptConfirm(
+        "中断制作提示",
+        `当前正有写书任务正在进行中：《${topic || "未命名书籍"}》正在制作中。加载其他图书将中断并终止当前的图书制作任务，是否确定要中断并继续加载？`
+      );
+      if (!interrupt) {
+        addLog("用户取消了图书加载，继续当前的图书制作。", "info");
+        return; // 放弃载入
+      }
+
+      // 中断当前制作继续加载操作
+      addLog("用户选择中断当前制作，正在终止生成进程...", "info");
+      stopRef.current = true;
+      setStopRequested(true);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      setIsGeneratingOutline(false);
+      setGeneratingChapterIdx(null);
+    }
+
     try {
       let book: any = null;
 
@@ -288,7 +311,7 @@ export default function App() {
         // Fallback to fetch from database
         book = await getBook(bookId);
         if (!book) {
-          alert("加载书籍失败，可能该书已从系统库中移除且未保存在本地缓存");
+          await showCustomAlert("加载失败", "加载书籍失败，可能该书已从系统库中移除且未保存在本地缓存");
           return;
         }
         isLoadedFromDatabaseRef.current = true;
@@ -304,8 +327,9 @@ export default function App() {
       setOutline(book.outline);
       setChaptersContent(book.chaptersContent || {});
       setCompletedChapters(book.completedChapters || []);
-      setTargetModel(book.modelUsed || "deepseek-v4-pro");
-      setConfigActiveModel(book.modelUsed || "deepseek-v4-pro");
+      const virtualModel = mapActualModelToVirtual(book.modelUsed);
+      setTargetModel(virtualModel);
+      setConfigActiveModel(virtualModel);
       setCurrentBookId(book.id);
 
       // Store to localStorage to maintain state persistence across refresh
@@ -323,7 +347,7 @@ export default function App() {
       );
       localStorage.setItem(
         "instabook-targetModel",
-        book.modelUsed || "deepseek-v4-pro",
+        virtualModel,
       );
       localStorage.setItem("instabook-currentBookId", book.id);
 
@@ -357,10 +381,10 @@ export default function App() {
         `📂 成功自后台数据库还原书籍工作区：《${book.title || book.topic}》`,
         "success",
       );
-      alert(`📂 书籍《${book.title || book.topic}》已还原载入！`);
+      await showCustomAlert("还原成功", `📂 书籍《${book.title || book.topic}》已还原载入！`);
     } catch (err: any) {
       console.error("还原书籍工作区失败:", err);
-      alert("还原书籍时发生内部错误: " + err.message);
+      await showCustomAlert("还原失败", "还原书籍时发生内部错误: " + err.message);
     }
   };
 
@@ -403,7 +427,7 @@ export default function App() {
           completedChaptersOverride !== undefined
             ? completedChaptersOverride
             : completedChapters,
-        modelUsed: targetModel,
+        modelUsed: getDisplayModelName(targetModel),
       });
       // Quietly reload book count and list if active
       loadDatabaseBooks();
@@ -442,7 +466,7 @@ export default function App() {
         outline,
         chaptersContent: currentChaptersContent,
         completedChapters: currentCompletedChapters,
-        modelUsed: targetModel,
+        modelUsed: getDisplayModelName(targetModel),
         timestamp: Date.now(),
         title: outline.title,
         subtitle: outline.subtitle,
@@ -524,6 +548,92 @@ export default function App() {
   const isLoadedFromDatabaseRef = useRef<boolean>(false);
   const contentBufferRef = useRef<string>("");
   const logEndRef = useRef<HTMLDivElement>(null);
+
+  // Custom dialog modal system
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type: "alert" | "confirm" | "interrupt";
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    onConfirm: (() => void) | null;
+    onCancel: (() => void) | null;
+  }>({
+    isOpen: false,
+    type: "alert",
+    title: "",
+    message: "",
+    confirmText: "确定",
+    cancelText: "取消",
+    onConfirm: null,
+    onCancel: null,
+  });
+
+  const showCustomAlert = (title: string, message: string): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      setDialog({
+        isOpen: true,
+        type: "alert",
+        title,
+        message,
+        confirmText: "确定",
+        cancelText: "",
+        onConfirm: () => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          resolve();
+        },
+        onCancel: null,
+      });
+    });
+  };
+
+  const showCustomConfirm = (
+    title: string,
+    message: string,
+    confirmText: string = "确定",
+    cancelText: string = "取消",
+  ): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      setDialog({
+        isOpen: true,
+        type: "confirm",
+        title,
+        message,
+        confirmText,
+        cancelText,
+        onConfirm: () => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          resolve(true);
+        },
+        onCancel: () => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          resolve(false);
+        },
+      });
+    });
+  };
+
+  const showInterruptConfirm = (title: string, message: string): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      setDialog({
+        isOpen: true,
+        type: "interrupt",
+        title,
+        message,
+        confirmText: "中断当前制作继续加载操作",
+        cancelText: "放弃载入",
+        onConfirm: () => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          resolve(true);
+        },
+        onCancel: () => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          resolve(false);
+        },
+      });
+    });
+  };
 
   // Page index focus retention
   const currentActivePageIdRef = useRef<string>("");
@@ -612,6 +722,44 @@ export default function App() {
     const timer = setTimeout(performRestoration, 60);
     return () => clearTimeout(timer);
   }, [chaptersContent, completedChapters, outline, generatingChapterIdx, mobileWorkTab, currentBookId]);
+
+  const jumpToPage = (sectionType: "rec" | "intro" | "chap", index?: number) => {
+    let targetId = "";
+    if (sectionType === "intro") {
+      targetId = "page-anchor-intro-0";
+    } else if (sectionType === "rec" && index !== undefined) {
+      targetId = `page-anchor-rec-${index}-0`;
+    } else if (sectionType === "chap" && index !== undefined) {
+      targetId = `page-anchor-chap-${index}-0`;
+    }
+
+    if (!targetId) return;
+
+    if (mobileWorkTab !== "reader") {
+      setMobileWorkTab("reader");
+    }
+
+    setTimeout(() => {
+      const container = document.getElementById("book-reader-container");
+      const targetElement = document.getElementById(targetId);
+      if (container && targetElement) {
+        const targetRect = targetElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const diff = targetRect.top - containerRect.top;
+        container.scrollTo({
+          top: container.scrollTop + diff,
+          behavior: "smooth"
+        });
+
+        currentActivePageIdRef.current = targetId;
+        scrollRelativeOffsetRef.current = 0;
+        if (currentBookId) {
+          localStorage.setItem(`instabook-focus-page-${currentBookId}`, targetId);
+          localStorage.setItem(`instabook-focus-offset-${currentBookId}`, "0");
+        }
+      }
+    }, 120);
+  };
 
   useEffect(() => {
     if (logEndRef.current) {
@@ -718,7 +866,7 @@ export default function App() {
           outline,
           chaptersContent,
           completedChapters,
-          modelUsed: targetModel,
+          modelUsed: getDisplayModelName(targetModel),
           timestamp: Date.now(),
           title: outline.title,
           subtitle: outline.subtitle,
@@ -802,7 +950,7 @@ export default function App() {
     setIsLoggedIn(false);
     sessionStorage.removeItem("isLoggedIn");
     addLog("🔒 成功退出管理员登录模式", "info");
-    alert("已退出管理员后台模式！");
+    showCustomAlert("退出登录", "已退出管理员后台模式！");
   };
 
   // Custom API keys and model override states
@@ -847,6 +995,36 @@ export default function App() {
       localStorage.getItem("instabook-realmodel-qwen3.6-plus") ||
       "qwen-max",
   );
+
+  const getDisplayModelName = (modelKey: string) => {
+    if (!modelKey) return "未知";
+    const m = modelKey.toLowerCase();
+    if (m === "gemini-1.5-pro" || m === "gemini-2.5-pro" || m === "gemini") {
+      return geminiReal || "gemini-3.5-flash";
+    }
+    if (m === "deepseek-v4-pro" || m === "deepseek") {
+      return dsReal || "deepseek-chat";
+    }
+    if (m === "qwen3.6-plus" || m === "qwen") {
+      return qwenReal || "qwen-plus";
+    }
+    return modelKey;
+  };
+
+  const mapActualModelToVirtual = (modelUsed: string): string => {
+    if (!modelUsed) return "deepseek-v4-pro";
+    const m = modelUsed.toLowerCase();
+    if (m === "gemini-1.5-pro" || m === "gemini-2.5-pro" || m === "gemini-3.5-flash" || m.includes("gemini")) {
+      return "gemini-1.5-pro";
+    }
+    if (m === "deepseek-v4-pro" || m === "deepseek-chat" || m.includes("deepseek")) {
+      return "deepseek-v4-pro";
+    }
+    if (m === "qwen3.6-plus" || m === "qwen-max" || m.includes("qwen") || m.includes("dashscope")) {
+      return "qwen3.6-plus";
+    }
+    return "deepseek-v4-pro"; // fallback
+  };
 
   const loadSystemSettings = () => {
     // Fetch stored settings from server database
@@ -1017,14 +1195,14 @@ export default function App() {
         if (!res.ok) {
           const errData = await res.json();
           console.error("Failed to sync settings with Cloudflare/Server", errData);
-          alert("⚠️ 配置同步到服务器失败: " + (errData.error || "未知原因，请检查数据库绑定"));
+          showCustomAlert("同步失败", "⚠️ 配置同步到服务器失败: " + (errData.error || "未知原因，请检查数据库绑定"));
         } else {
           console.log("配置已成功保存并同步到服务器数据库");
         }
       })
       .catch((err) => {
         console.error("Network error syncing settings with Cloudflare/Server:", err);
-        alert("❌ 同步出错: " + err.message);
+        showCustomAlert("同步错误", "❌ 同步出错: " + err.message);
       });
 
     setShowConfigModal(false);
@@ -1099,13 +1277,14 @@ export default function App() {
         setApiTestStatus("success");
       } else {
         setApiTestStatus("error");
-        alert(
+        await showCustomAlert(
+          "测试失败",
           `❌ API Key 测试失败或遇到额度限制: \n\n${result.error || result.message}`,
         );
       }
     } catch (e: any) {
       setApiTestStatus("error");
-      alert(`❌ 测试请求失败，网络异常或服务未部署。\n${e.message}`);
+      await showCustomAlert("测试失败", `❌ 测试请求失败，网络异常或服务未部署。\n${e.message}`);
     } finally {
       setIsTestingApi(false);
     }
@@ -1189,7 +1368,7 @@ export default function App() {
         errorMessage =
           "API Key 无效或未配置。请点击右上角进入「管理员配置」重新设置可用的 API Key、自定义模型名或检测接通状态。";
       }
-      alert(`生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
+      await showCustomAlert("生成大纲失败", `生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
       setIsGeneratingOutline(false);
     }
   };
@@ -1404,7 +1583,7 @@ export default function App() {
       saveAs(content, `${outline.title}-project.zip`);
     } catch (err) {
       console.error("Export project failed:", err);
-      alert("导出项目失败！");
+      await showCustomAlert("导出错误", "导出项目失败！");
     }
   };
 
@@ -1418,7 +1597,7 @@ export default function App() {
 
       const projectFile = unzipped.file("project.json");
       if (!projectFile) {
-        alert("无效的压缩包，未找到项目数据 (project.json)");
+        await showCustomAlert("导入格式错误", "无效的压缩包，未找到项目数据 (project.json)");
         return;
       }
 
@@ -1441,11 +1620,11 @@ export default function App() {
       ) {
         setShowContinueModal(true);
       } else {
-        alert("图书项目导入成功！");
+        await showCustomAlert("导入成功", "图书项目导入成功！");
       }
     } catch (error) {
       console.error("Import failed", error);
-      alert("导入图书项目失败！请确保你上传的是该工具导出的 zip 文件。");
+      await showCustomAlert("导入失败", "导入图书项目失败！请确保你上传的是该工具导出的 zip 文件。");
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -1614,7 +1793,7 @@ export default function App() {
       setShowExportModal(false);
     } catch (err) {
       console.error(err);
-      alert(`下载 ${format.toUpperCase()} 失败！`);
+      await showCustomAlert("下载提示", `下载 ${format.toUpperCase()} 失败！`);
       setExportProgress({ isExporting: false, text: "", percent: 0 });
     }
   };
@@ -1748,7 +1927,7 @@ export default function App() {
         outline,
         chaptersContent,
         completedChapters,
-        modelUsed: targetModel,
+        modelUsed: getDisplayModelName(targetModel),
         timestamp: Date.now(),
         title: outline.title,
         subtitle: outline.subtitle,
@@ -1822,7 +2001,7 @@ export default function App() {
       await generateEPUB(outline, chaptersContent, wordCount, coverBlob);
     } catch (err) {
       console.error(err);
-      alert("下载 EPUB 电子书失败！");
+      await showCustomAlert("下载提示", "下载 EPUB 电子书失败！");
     }
   };
 
@@ -2813,8 +2992,11 @@ export default function App() {
                           </h2>
                           <div className="space-y-[0.6rem] font-serif text-[0.85rem] leading-tight">
                             {p === 0 && (
-                              <div className="flex items-baseline justify-between group mb-2">
-                                <span className="pr-4 bg-[#fcfbf8] transition-colors z-10 print:bg-[#fcfbf8] inline-block max-w-[85%]">
+                              <div
+                                onClick={() => jumpToPage("intro")}
+                                className="flex items-baseline justify-between group mb-2 cursor-pointer hover:text-emerald-800 transition-colors select-none"
+                              >
+                                <span className="pr-4 bg-[#fcfbf8] transition-colors z-10 print:bg-[#fcfbf8] inline-block max-w-[85%] group-hover:underline">
                                   引言
                                 </span>
                                 <div className="flex-grow border-b border-dotted border-stone-400 relative top-[-4px]"></div>
@@ -2828,9 +3010,10 @@ export default function App() {
                               return (
                                 <div
                                   key={globalIdx}
-                                  className="flex items-baseline justify-between group"
+                                  onClick={() => jumpToPage("chap", globalIdx)}
+                                  className="flex items-baseline justify-between group cursor-pointer hover:text-emerald-800 transition-colors select-none"
                                 >
-                                  <span className="pr-4 bg-[#fcfbf8] transition-colors z-10 print:bg-[#fcfbf8] inline-block max-w-[85%]">
+                                  <span className="pr-4 bg-[#fcfbf8] transition-colors z-10 print:bg-[#fcfbf8] inline-block max-w-[85%] group-hover:underline">
                                     第 {globalIdx + 1} 章 {chap.title}
                                   </span>
                                   <div className="flex-grow border-b border-dotted border-stone-400 relative top-[-4px]"></div>
@@ -3107,25 +3290,40 @@ export default function App() {
                     return (
                       <div
                         key={idx}
-                        className="flex items-center justify-between text-xs py-1 border-b border-stone-50/50"
+                        onClick={isCompleted || isGenerating ? () => jumpToPage("chap", idx) : undefined}
+                        className={`flex items-center justify-between text-xs py-1.5 border-b border-stone-100/30 ${
+                          isCompleted || isGenerating
+                            ? "cursor-pointer hover:bg-stone-100/70 p-1.5 rounded-lg -mx-1.5 transition-all group select-none"
+                            : "opacity-60 select-none"
+                        }`}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0 max-w-[75%]">
+                        <div className="flex items-center gap-2.5 min-w-0 max-w-[73%]">
                           {isCompleted ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform" />
                           ) : isGenerating ? (
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" />
                           ) : (
                             <div className="w-4 h-4 border border-stone-300 rounded-full shrink-0" />
                           )}
                           <span
-                            className={`truncate ${isCompleted ? "text-stone-800" : isGenerating ? "text-emerald-700 font-medium animate-pulse" : "text-stone-400"}`}
+                            className={`truncate ${
+                              isCompleted
+                                ? "text-stone-800 group-hover:text-stone-950 group-hover:underline decoration-emerald-500 decoration-1.5 underline-offset-3 font-medium"
+                                : isGenerating
+                                ? "text-emerald-700 font-medium animate-pulse group-hover:underline decoration-emerald-500 decoration-1.5 underline-offset-3"
+                                : "text-stone-400"
+                            }`}
                           >
                             第 {idx + 1} 章：{chap.title}
                           </span>
                         </div>
                         {pageText && (
                           <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded ${isCompleted ? "bg-stone-50 text-stone-500 border border-stone-200/50" : "bg-emerald-50 text-emerald-600 border border-emerald-100 font-medium"}`}
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-mono shrink-0 transition-all ${
+                              isCompleted
+                                ? "bg-stone-50 text-stone-500 border border-stone-200/50 group-hover:bg-emerald-50 group-hover:text-emerald-600 group-hover:border-emerald-200/50 group-hover:scale-105"
+                                : "bg-emerald-50 text-emerald-600 border border-emerald-100 font-medium"
+                            }`}
                           >
                             {pageText}
                           </span>
@@ -3751,7 +3949,7 @@ export default function App() {
                                       <span>
                                         模型:{" "}
                                         <strong className="text-stone-700 font-bold font-mono text-[11px]">
-                                          {item.modelUsed}
+                                          {getDisplayModelName(item.modelUsed)}
                                         </strong>
                                       </span>
                                     </div>
@@ -3894,6 +4092,47 @@ export default function App() {
                 className="py-2.5 px-6 bg-stone-900 hover:bg-stone-800 text-white font-medium text-sm rounded-xl transition-colors shadow-sm"
               >
                 保存配置
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 自制弹出对话框 (Custom Dialog Modal) */}
+      {dialog.isOpen && (
+        <div className="fixed inset-0 bg-stone-950/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-xs animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-full ${
+                dialog.type === "interrupt" ? "bg-amber-50 text-amber-600" : "bg-stone-50 text-stone-700"
+              }`}>
+                <AlertCircle className="w-6 h-6 shrink-0" />
+              </div>
+              <h4 className="text-base md:text-lg font-bold text-stone-900 font-sans">{dialog.title}</h4>
+            </div>
+            
+            <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-wrap">{dialog.message}</p>
+            
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+              {dialog.type !== "alert" && (
+                <button
+                  type="button"
+                  onClick={dialog.onCancel || undefined}
+                  className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center active:scale-95"
+                >
+                  {dialog.cancelText || "取消"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={dialog.onConfirm || undefined}
+                className={`px-4 py-2.5 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer text-center active:scale-95 ${
+                  dialog.type === "interrupt"
+                    ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-500/20"
+                    : "bg-stone-950 hover:bg-stone-800"
+                }`}
+              >
+                {dialog.confirmText || "确定"}
               </button>
             </div>
           </div>
