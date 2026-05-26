@@ -327,7 +327,7 @@ export default function App() {
       setOutline(book.outline);
       setChaptersContent(book.chaptersContent || {});
       setCompletedChapters(book.completedChapters || []);
-      const virtualModel = mapActualModelToVirtual(book.modelUsed);
+      const virtualModel = book.virtualModel || mapActualModelToVirtual(book.modelUsed);
       setTargetModel(virtualModel);
       setConfigActiveModel(virtualModel);
       setCurrentBookId(book.id);
@@ -428,6 +428,7 @@ export default function App() {
             ? completedChaptersOverride
             : completedChapters,
         modelUsed: getDisplayModelName(targetModel),
+        virtualModel: targetModel,
       });
       // Quietly reload book count and list if active
       loadDatabaseBooks();
@@ -467,6 +468,7 @@ export default function App() {
         chaptersContent: currentChaptersContent,
         completedChapters: currentCompletedChapters,
         modelUsed: getDisplayModelName(targetModel),
+        virtualModel: targetModel,
         timestamp: Date.now(),
         title: outline.title,
         subtitle: outline.subtitle,
@@ -867,6 +869,7 @@ export default function App() {
           chaptersContent,
           completedChapters,
           modelUsed: getDisplayModelName(targetModel),
+          virtualModel: targetModel,
           timestamp: Date.now(),
           title: outline.title,
           subtitle: outline.subtitle,
@@ -1012,18 +1015,38 @@ export default function App() {
   };
 
   const mapActualModelToVirtual = (modelUsed: string): string => {
-    if (!modelUsed) return "deepseek-v4-pro";
+    if (!modelUsed) return qwenKey ? "qwen3.6-plus" : "deepseek-v4-pro";
     const m = modelUsed.toLowerCase();
+    
+    // Check if Gemini is the match
     if (m === "gemini-1.5-pro" || m === "gemini-2.5-pro" || m === "gemini-3.5-flash" || m.includes("gemini")) {
       return "gemini-1.5-pro";
     }
+
+    // If modelUsed is "deepseek-v4-pro" or contains "deepseek", it could be DeepSeek Official OR DeepSeek on Aliyun DashScope (Qwen)
     if (m === "deepseek-v4-pro" || m === "deepseek-chat" || m.includes("deepseek")) {
+      const hasQwenKey = !!qwenKey || !!localStorage.getItem("instabook-apikey-qwen");
+      const hasDsKey = !!dsKey || !!localStorage.getItem("instabook-apikey-deepseek");
+      const qwenModelStr = (qwenReal || localStorage.getItem("instabook-realmodel-qwen") || "").toLowerCase();
+      
+      // If user configured Qwen/Aliyun key, and did NOT configure DeepSeek Official key, route to Qwen
+      if (hasQwenKey && !hasDsKey) {
+        return "qwen3.6-plus";
+      }
+      
+      // If the model name entered in the selection or configured in Qwen custom model matches this, route to Qwen
+      if (qwenModelStr && (qwenModelStr.includes(m) || m.includes(qwenModelStr))) {
+        return "qwen3.6-plus";
+      }
+      
       return "deepseek-v4-pro";
     }
+
     if (m === "qwen3.6-plus" || m === "qwen-max" || m.includes("qwen") || m.includes("dashscope")) {
       return "qwen3.6-plus";
     }
-    return "deepseek-v4-pro"; // fallback
+
+    return qwenKey ? "qwen3.6-plus" : "deepseek-v4-pro"; // fallback
   };
 
   const loadSystemSettings = () => {

@@ -94,7 +94,7 @@ async function startServer() {
       const { 
         id, title, subtitle, author, topic, genre, 
         wordCount, writingStyle, detailedRequirements, 
-        outline, chaptersContent, completedChapters, modelUsed 
+        outline, chaptersContent, completedChapters, modelUsed, virtualModel 
       } = req.body;
       
       if (!id) {
@@ -118,6 +118,7 @@ async function startServer() {
         chaptersContent: chaptersContent || {},
         completedChapters: completedChapters || [],
         modelUsed: modelUsed || "deepseek-v4-pro",
+        virtualModel: virtualModel || "",
         updatedAt: new Date().toISOString()
       };
 

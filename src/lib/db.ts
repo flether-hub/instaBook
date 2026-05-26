@@ -14,6 +14,7 @@ export interface BookRecord {
   chaptersContent: Record<string, string>;
   completedChapters: string[];
   modelUsed: string;
+  virtualModel?: string;
   updatedAt: string;
 }
 
@@ -117,6 +118,7 @@ export async function saveBook(book: Partial<BookRecord>): Promise<BookRecord> {
     chaptersContent: book.chaptersContent || existing?.chaptersContent || {},
     completedChapters: book.completedChapters || existing?.completedChapters || [],
     modelUsed: book.modelUsed || existing?.modelUsed || "deepseek-v4-pro",
+    virtualModel: book.virtualModel || existing?.virtualModel,
     updatedAt: new Date().toISOString()
   };
 
