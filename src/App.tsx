@@ -2547,11 +2547,11 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex flex-row gap-3 mt-4">
+                    <div className="flex flex-row gap-3 mt-4 items-center">
                       <button
                         onClick={startGeneration}
                         disabled={!topic.trim() || isGeneratingOutline}
-                        className="flex-1 py-4 px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
+                        className="flex-1 h-[52px] bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-semibold transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 border border-transparent"
                       >
                         <Wand2 className="w-5 h-5 shrink-0" />
                         <span>开始撰写</span>
@@ -2559,12 +2559,12 @@ export default function App() {
                       <button
                         onClick={testApiKey}
                         disabled={isTestingApi}
-                        className={`py-4 px-4 sm:px-6 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap shrink-0 ${
+                        className={`h-[52px] px-4 sm:px-6 rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap shrink-0 ${
                           apiTestStatus === "success"
-                            ? "bg-green-100 hover:bg-green-200 text-green-700 border border-green-300"
+                            ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300"
                             : apiTestStatus === "error"
-                              ? "bg-red-100 hover:bg-red-200 text-red-700 border border-red-300"
-                              : "bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300"
+                              ? "bg-red-50 hover:bg-red-100 text-red-700 border border-red-300"
+                              : "bg-stone-100 hover:bg-stone-150/80 text-stone-700 border border-stone-300"
                         }`}
                         title={
                           isTestingApi
@@ -2577,19 +2577,19 @@ export default function App() {
                         }
                       >
                         {isTestingApi ? (
-                          <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+                          <Loader2 className="w-5 h-5 animate-spin shrink-0 text-stone-500" />
                         ) : apiTestStatus === "success" ? (
-                          <CheckCircle2 className="w-5 h-5 shrink-0" />
+                          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
                         ) : apiTestStatus === "error" ? (
-                          <Activity className="w-5 h-5 shrink-0" />
+                          <Activity className="w-5 h-5 shrink-0 text-red-600" />
                         ) : (
-                          <Activity className="w-5 h-5 shrink-0" />
+                          <Activity className="w-5 h-5 shrink-0 text-stone-500" />
                         )}
                         <span className="hidden sm:inline">
                           {isTestingApi
                             ? "测试中"
                             : apiTestStatus === "success"
-                              ? "已连接"
+                              ? "连接成功"
                               : apiTestStatus === "error"
                                 ? "连接失败"
                                 : "测试连接"}
@@ -2643,7 +2643,7 @@ export default function App() {
                           ) : (
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
                           )}
-                          <span className={`${stopRequested ? "text-stone-500" : "text-emerald-700 font-semibold animate-pulse"} text-sm`}>
+                          <span className={`${stopRequested ? "text-stone-500" : "text-emerald-700 font-medium animate-pulse"} text-sm`}>
                             正在撰写出版大纲与章节结构
                           </span>
                           {!stopRequested && (
@@ -3354,7 +3354,7 @@ export default function App() {
                       <div
                         key={idx}
                         onClick={isCompleted || isGenerating ? () => jumpToPage("chap", idx) : undefined}
-                        className={`flex items-center justify-between text-xs py-1.5 border-b border-stone-100/30 ${
+                        className={`flex items-center justify-between text-sm py-1.5 border-b border-stone-100/30 ${
                           isCompleted || isGenerating
                             ? "cursor-pointer hover:bg-stone-100/70 p-1.5 rounded-lg -mx-1.5 transition-all group select-none"
                             : "opacity-60 select-none"
@@ -3364,7 +3364,7 @@ export default function App() {
                           {isCompleted ? (
                             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform" />
                           ) : isGenerating ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" />
+                            <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
                           ) : (
                             <div className="w-4 h-4 border border-stone-300 rounded-full shrink-0" />
                           )}
