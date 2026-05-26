@@ -2273,7 +2273,7 @@ export default function App() {
     <div
       className={`bg-stone-50/50 text-stone-900 font-sans selection:bg-stone-300 selection:text-stone-900 bg-fixed ${
         outline
-          ? "lg:h-screen lg:overflow-hidden lg:flex lg:flex-col pb-0"
+          ? "min-h-screen flex flex-col lg:h-screen lg:overflow-hidden pb-0"
           : "min-h-screen flex flex-col pb-0"
       }`}
       style={{
@@ -2807,13 +2807,13 @@ export default function App() {
       {outline && (
         <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-4 transition-all font-sans lg:overflow-hidden flex flex-col min-h-0">
           {/* Mobile Tab Switcher */}
-          <div className="flex lg:hidden bg-stone-150/60 p-1 rounded-xl mb-4 border border-stone-250/30 relative z-10 select-none">
+          <div className="flex lg:hidden bg-stone-100/80 p-1.5 rounded-xl mb-4 border border-stone-200/50 relative z-10 select-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
             <button
               onClick={() => setMobileWorkTab("control")}
               className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 mobileWorkTab === "control"
-                  ? "bg-white text-stone-900 shadow-sm border border-stone-200/40 font-semibold"
-                  : "text-stone-550 hover:text-stone-750"
+                  ? "bg-white text-stone-900 shadow-sm border border-stone-200/45 font-semibold"
+                  : "text-stone-500 hover:text-stone-800"
               }`}
             >
               <Activity className="w-3.5 h-3.5 text-emerald-600" />
@@ -2823,11 +2823,11 @@ export default function App() {
               onClick={() => setMobileWorkTab("reader")}
               className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 mobileWorkTab === "reader"
-                  ? "bg-white text-stone-900 shadow-sm border border-stone-200/40 font-semibold"
-                  : "text-stone-550 hover:text-stone-750"
+                  ? "bg-white text-stone-900 shadow-sm border border-stone-200/45 font-semibold"
+                  : "text-stone-500 hover:text-stone-800"
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5 text-amber-755" />
+              <BookOpen className="w-3.5 h-3.5 text-amber-600" />
               阅读预览
             </button>
           </div>
@@ -3782,7 +3782,7 @@ export default function App() {
                         <input
                           type="password"
                           autoComplete="new-password"
-                          className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={dsKey}
                           onChange={(e) => setDsKey(e.target.value)}
                           placeholder="sk-..."
@@ -3794,7 +3794,7 @@ export default function App() {
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
                           value={dsReal}
                           onChange={(e) => setDsReal(e.target.value)}
                           placeholder="deepseek-chat"
@@ -3832,7 +3832,7 @@ export default function App() {
                         <input
                           type="password"
                           autoComplete="new-password"
-                          className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={geminiKey}
                           onChange={(e) => setGeminiKey(e.target.value)}
                           placeholder="AIzaSy..."
@@ -3844,7 +3844,7 @@ export default function App() {
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
                           value={geminiReal}
                           onChange={(e) => setGeminiReal(e.target.value)}
                           placeholder="gemini-3.5-flash"
@@ -3882,7 +3882,7 @@ export default function App() {
                         <input
                           type="password"
                           autoComplete="new-password"
-                          className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={qwenKey}
                           onChange={(e) => setQwenKey(e.target.value)}
                           placeholder="sk-..."
@@ -3894,7 +3894,7 @@ export default function App() {
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
                           value={qwenReal}
                           onChange={(e) => setQwenReal(e.target.value)}
                           placeholder="qwen-max"
