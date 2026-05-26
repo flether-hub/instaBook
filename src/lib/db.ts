@@ -40,14 +40,30 @@ async function fetchWithTimeout(resource: string, options: any = {}, timeout = 6
   }
 }
 
-export async function getBooks(): Promise<Partial<BookRecord>[]> {
+export async function getBooks(page?: number, limit?: number): Promise<{ results: Partial<BookRecord>[]; total: number }> {
   // First, always check if the server-side API is available and works
   try {
-    const res = await fetchWithTimeout("/api/books");
+    const url = page && limit ? `/api/books?page=${page}&limit=${limit}` : "/api/books";
+    const res = await fetchWithTimeout(url);
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data)) {
-        return data;
+      if (data && typeof data === "object" && "results" in data && Array.isArray(data.results)) {
+        return {
+          results: data.results,
+          total: data.total
+        };
+      } else if (Array.isArray(data)) {
+        if (page && limit) {
+          const startIndex = (page - 1) * limit;
+          return {
+            results: data.slice(startIndex, startIndex + limit),
+            total: data.length
+          };
+        }
+        return {
+          results: data,
+          total: data.length
+        };
       }
     }
   } catch (err) {
@@ -63,7 +79,7 @@ export async function getBooks(): Promise<Partial<BookRecord>[]> {
   // Sort by updatedAt DESC
   books.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   
-  return books.map(b => ({
+  const mapped = books.map(b => ({
     id: b.id,
     title: b.title || b.topic || "未命名书目",
     subtitle: b.subtitle || "",
@@ -76,6 +92,19 @@ export async function getBooks(): Promise<Partial<BookRecord>[]> {
     modelUsed: b.modelUsed || "未知模型",
     updatedAt: b.updatedAt || new Date().toISOString()
   }));
+
+  if (page && limit) {
+    const startIndex = (page - 1) * limit;
+    return {
+      results: mapped.slice(startIndex, startIndex + limit),
+      total: mapped.length
+    };
+  }
+
+  return {
+    results: mapped,
+    total: mapped.length
+  };
 }
 
 export async function getBook(id: string): Promise<BookRecord | null> {

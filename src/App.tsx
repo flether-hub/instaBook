@@ -182,6 +182,7 @@ export default function App() {
   );
   const [adminTab, setAdminTab] = useState<"config" | "database">("config");
   const [dbBooks, setDbBooks] = useState<any[]>([]);
+  const [dbTotalCount, setDbTotalCount] = useState(0);
   const [dbPage, setDbPage] = useState(1);
   const [localBooks, setLocalBooks] = useState<any[]>(() => {
     try {
@@ -194,11 +195,12 @@ export default function App() {
   const [mobileWorkTab, setMobileWorkTab] = useState<"reader" | "control">("control");
   const [isLoadingBooks, setIsLoadingBooks] = useState(false);
 
-  const loadDatabaseBooks = async () => {
+  const loadDatabaseBooks = async (page: number = dbPage) => {
     setIsLoadingBooks(true);
     try {
-      const data = await getBooks();
-      setDbBooks(data);
+      const data = await getBooks(page, 5);
+      setDbBooks(data.results);
+      setDbTotalCount(data.total);
     } catch (err) {
       console.error("加载后台数据库书籍名录失败:", err);
     } finally {
@@ -216,14 +218,13 @@ export default function App() {
     }
     try {
       await deleteBook(id);
-      // Remove from backend
-      setDbBooks((prev) => {
-        const updated = prev.filter((b) => b.id !== id);
-        const maxPage = Math.ceil(updated.length / 5) || 1;
-        setDbPage((p) => Math.max(1, Math.min(p, maxPage)));
-        return updated;
-      });
-      loadDatabaseBooks();
+      // Adjust dbTotalCount and dbPage accordingly
+      const nextTotal = Math.max(0, dbTotalCount - 1);
+      setDbTotalCount(nextTotal);
+      const maxPage = Math.ceil(nextTotal / 5) || 1;
+      const targetPage = Math.max(1, Math.min(dbPage, maxPage));
+      setDbPage(targetPage);
+      loadDatabaseBooks(targetPage);
 
       // Also remove from local history
       try {
@@ -948,12 +949,12 @@ export default function App() {
     loadDatabaseBooks();
   }, []);
 
-  // Re-fetch historical books when settings modal is opened
+  // Re-fetch historical books when settings modal is opened or page changes
   useEffect(() => {
     if (showConfigModal) {
-      loadDatabaseBooks();
+      loadDatabaseBooks(dbPage);
     }
-  }, [showConfigModal]);
+  }, [showConfigModal, dbPage, adminTab]);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -3730,7 +3731,7 @@ export default function App() {
                 onClick={() => {
                   setAdminTab("database");
                   setDbPage(1);
-                  loadDatabaseBooks();
+                  loadDatabaseBooks(1);
                 }}
                 className={`flex-1 py-2.5 md:py-3 text-center text-xs md:text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   adminTab === "database"
@@ -3739,7 +3740,7 @@ export default function App() {
                 }`}
               >
                 <Database className="w-4 h-4 hidden md:block" />
-                数据管理 ({dbBooks.length})
+                数据管理 ({dbTotalCount})
               </button>
             </div>
 
@@ -3915,7 +3916,7 @@ export default function App() {
                         正在读取内置 SQLite 数据库...
                       </span>
                     </div>
-                  ) : dbBooks.length === 0 ? (
+                  ) : dbTotalCount === 0 ? (
                     <div className="py-12 text-center text-stone-400 space-y-4 bg-stone-50 rounded-2xl border border-stone-150 border-dashed">
                       <Database className="w-12 h-12 text-stone-300 mx-auto animate-pulse" />
                       <div className="space-y-1">
@@ -3932,17 +3933,12 @@ export default function App() {
                     (() => {
                       const itemsPerPage = 5;
                       const totalPages =
-                        Math.ceil(dbBooks.length / itemsPerPage) || 1;
+                        Math.ceil(dbTotalCount / itemsPerPage) || 1;
                       const activeDbPage = Math.max(
                         1,
                         Math.min(dbPage, totalPages),
                       );
-                      const startIndex = (activeDbPage - 1) * itemsPerPage;
-                      const endIndex = startIndex + itemsPerPage;
-                      const paginatedDbBooks = dbBooks.slice(
-                        startIndex,
-                        endIndex,
-                      );
+                      const paginatedDbBooks = dbBooks;
 
                       return (
                         <div className="space-y-5">
@@ -4049,7 +4045,7 @@ export default function App() {
                               <span className="font-medium text-stone-500">
                                 共{" "}
                                 <strong className="text-stone-800 font-semibold">
-                                  {dbBooks.length}
+                                  {dbTotalCount}
                                 </strong>{" "}
                                 本书，当前显示第 {activeDbPage} / {totalPages}{" "}
                                 页
