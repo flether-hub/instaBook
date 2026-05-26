@@ -1534,6 +1534,10 @@ export default function App() {
           if (isRetryable) {
             retries--;
             if (retries > 0) {
+              addLog(
+                `⏳ 检测到网络波动或服务器瞬时繁忙：系统正在后台进行退避，将在 ${(backoffMs / 1000).toFixed(0)} 秒后自动开始下一次重试，请稍候...`,
+                "info",
+              );
               console.log(
                 `Error encountered. Waiting ${backoffMs / 1000} seconds before retrying...`,
               );
@@ -3197,14 +3201,14 @@ export default function App() {
                     id="page-anchor-end"
                     className="book-page-preview page-break flex flex-col items-center justify-center min-h-[50vh] text-center border-t border-stone-200 pt-16"
                   >
-                    <div className="w-12 h-12 mb-8 mx-auto bg-stone-900 rounded-[12px] flex items-center justify-center text-white">
-                      <BookOpen className="w-6 h-6" />
+                    <div className="w-12 h-12 mb-8 mx-auto bg-stone-900 rounded-[12px] flex items-center justify-center text-amber-500">
+                      <BrandLogo className="w-7 h-7" />
                     </div>
                     <p className="font-serif text-lg text-stone-500 max-w-md">
                       全书完
                     </p>
                     <p className="mt-8 text-sm text-stone-400 font-sans tracking-wide">
-                      本著作由 InstaBook Builder 强力驱动生成
+                      本著作由 InstaBook 瞬书 强力驱动生成
                     </p>
                   </div>
                 </div>

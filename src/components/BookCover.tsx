@@ -106,7 +106,7 @@ export function BookCover({
         {/* Top Section */}
         <div className="flex justify-between items-start" style={{ color: '#d6d3d1' }}>
            <span 
-             className="tracking-widest text-xs font-bold uppercase px-4 py-2 rounded-sm"
+             className="tracking-widest text-xs font-bold uppercase px-4 py-2 rounded-sm whitespace-nowrap"
              style={{ 
                backgroundColor: 'rgba(0,0,0,0.3)', 
                border: '1px solid rgba(255,255,255,0.1)',
