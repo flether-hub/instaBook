@@ -182,7 +182,7 @@ async function startServer() {
         if (modelId.toLowerCase().includes("gemini")) {
           baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         } else if (modelId.toLowerCase().includes("deepseek")) {
-          baseUrl = "https://api.deepseek.com/v1/chat/completions";
+          baseUrl = "https://api.deepseek.com/chat/completions";
         } else if (modelId.toLowerCase().includes("glm")) {
           baseUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
         } else {
@@ -212,7 +212,7 @@ async function startServer() {
       };
       
       const cleanKey = apiKey.replace(/^"|"$/g, '').trim();
-      if (baseUrl.includes("generativelanguage/v1beta/openai")) {
+      if (baseUrl.includes("generativelanguage.googleapis.com/v1beta/openai") || (baseUrl.includes("generativelanguage") && baseUrl.includes("/openai"))) {
         headers["Authorization"] = `Bearer ${cleanKey}`;
       } else if (baseUrl.includes("generativelanguage")) {
         headers["x-goog-api-key"] = cleanKey;
@@ -266,7 +266,7 @@ async function startServer() {
         if (modelId.toLowerCase().includes("gemini")) {
           baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         } else if (modelId.toLowerCase().includes("deepseek")) {
-          baseUrl = "https://api.deepseek.com/v1/chat/completions";
+          baseUrl = "https://api.deepseek.com/chat/completions";
         } else if (modelId.toLowerCase().includes("glm")) {
           baseUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
         } else {
@@ -288,7 +288,7 @@ async function startServer() {
       };
 
       const cleanKey = apiKey.replace(/^"|"$/g, '').trim();
-      if (baseUrl.includes("generativelanguage/v1beta/openai")) {
+      if (baseUrl.includes("generativelanguage.googleapis.com/v1beta/openai") || (baseUrl.includes("generativelanguage") && baseUrl.includes("/openai"))) {
         headers["Authorization"] = `Bearer ${cleanKey}`;
       } else if (baseUrl.includes("generativelanguage")) {
         headers["x-goog-api-key"] = cleanKey;

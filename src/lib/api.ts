@@ -35,7 +35,7 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
                 model;
   } else if (m.includes("deepseek")) {
     clientApiKey = localStorage.getItem("instabook-apikey-deepseek") || "";
-    clientBaseUrl = "https://api.deepseek.com/v1/chat/completions";
+    clientBaseUrl = "https://api.deepseek.com/chat/completions";
     realModel = localStorage.getItem("instabook-realmodel-deepseek") || "deepseek-chat";
   } else if (m.includes("glm")) {
     clientApiKey = localStorage.getItem("instabook-apikey-glm") || "";
@@ -189,7 +189,7 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
                   model;
     } else if (m.includes("deepseek")) {
       clientApiKey = localStorage.getItem("instabook-apikey-deepseek") || "";
-      clientBaseUrl = "https://api.deepseek.com/v1/chat/completions";
+      clientBaseUrl = "https://api.deepseek.com/chat/completions";
       realModel = localStorage.getItem("instabook-realmodel-deepseek") || "deepseek-chat";
     } else if (m.includes("glm")) {
       clientApiKey = localStorage.getItem("instabook-apikey-glm") || "";

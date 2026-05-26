@@ -970,7 +970,7 @@ export default function App() {
           console.error("Failed to sync settings with Cloudflare/Server", errData);
           alert("⚠️ 配置同步到服务器失败: " + (errData.error || "未知原因，请检查数据库绑定"));
         } else {
-          alert("✅ 配置已成功保存并同步到服务器数据库！");
+          console.log("配置已成功保存并同步到服务器数据库");
         }
       })
       .catch((err) => {
