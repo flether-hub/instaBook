@@ -1163,6 +1163,7 @@ export default function App() {
         sessionStorage.setItem("isLoggedIn", "true");
         setShowLoginModal(false);
         setLoginPassword("");
+        executeReturnHome();
         loadSystemSettings(); // Sync and load settings immediately from DB upon login
       } else {
         setLoginError(data.error || "密码错误，请重新输入");
