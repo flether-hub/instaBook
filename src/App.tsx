@@ -39,6 +39,7 @@ import {
 import { BookCover } from "./components/BookCover";
 import { BookContent } from "./components/BookContent";
 import { PaginatedSection } from "./components/PaginatedSection";
+import { FireworksOverlay } from "./components/FireworksOverlay";
 import {
   generateBookOutline,
   generateChapterContent,
@@ -2166,6 +2167,16 @@ export default function App() {
     }
   };
 
+  const handleLogoClick = () => {
+    // 1. Dispatch custom event to trigger spectacular fireworks
+    window.dispatchEvent(new CustomEvent("trigger-fireworks"));
+
+    // 2. Click is equivalent to return home button
+    if (outline) {
+      handleReturnHome();
+    }
+  };
+
   const handleContinueWriting = () => {
     setShowContinueModal(false);
     resumeGeneration();
@@ -2388,14 +2399,14 @@ export default function App() {
         <footer className="w-full py-4 text-center shrink-0 text-stone-500 font-sans animate-fade-in">
           <div className="max-w-4xl mx-auto flex flex-col gap-1.5 justify-center items-center">
             <div className="flex items-center justify-center gap-2 text-xs text-stone-700 font-sans font-medium">
+              <BookOpen className="w-3.5 h-3.5 text-stone-400 shrink-0" />
               <span>“书籍是屹立在时间的汪洋大海中的灯塔。”</span>
               <span className="text-stone-400 font-sans not-italic text-[10px]">
                 — 惠普尔
               </span>
             </div>
             <p className="text-[10px] text-stone-400/90 max-w-3xl text-center leading-relaxed font-sans">
-              Copyright @ InstaBook &nbsp;&nbsp; 本平台内容由 InstaBook
-              智能算法推理生成，仅供个人学术探讨及交流品鉴
+              Copyright @ InstaBook &nbsp;&nbsp; 本平台书籍由 InstaBook 瞬书 强力驱动生成，仅供个人阅读品鉴
             </p>
           </div>
         </footer>
@@ -2424,7 +2435,7 @@ export default function App() {
             className="flex items-center gap-2.5 select-none cursor-pointer"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
-            onClick={executeReturnHome}
+            onClick={handleLogoClick}
           >
             <motion.div
               className="relative flex items-center justify-center w-11 h-11 shrink-0"
@@ -3903,7 +3914,7 @@ export default function App() {
                 }`}
               >
                 <Database className="w-4 h-4 hidden md:block" />
-                数据管理 ({dbTotalCount})
+                书籍管理 ({dbTotalCount})
               </button>
             </div>
 
@@ -4298,15 +4309,17 @@ export default function App() {
               )}
             </div>
 
-            <div className="px-4 md:px-8 py-4 md:py-5 border-t border-stone-100 flex items-center justify-end gap-3 bg-stone-50/50 shrink-0">
-              <button
-                type="button"
-                onClick={handleSaveSettings}
-                className="py-2.5 px-6 bg-stone-900 hover:bg-stone-800 text-white font-medium text-sm rounded-xl transition-colors shadow-sm"
-              >
-                保存配置
-              </button>
-            </div>
+            {adminTab === "config" && (
+              <div className="px-4 md:px-8 py-4 md:py-5 border-t border-stone-100 flex items-center justify-end gap-3 bg-stone-50/50 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleSaveSettings}
+                  className="py-2.5 px-6 bg-stone-900 hover:bg-stone-800 text-white font-medium text-sm rounded-xl transition-colors shadow-sm cursor-pointer"
+                >
+                  保存配置
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -4357,6 +4370,7 @@ export default function App() {
         <div className="max-w-4xl mx-auto flex flex-col gap-1.5 justify-center items-center">
           {/* Row 1: Quote - Source */}
           <div className="flex items-center justify-center gap-2 text-xs text-stone-700 font-sans font-medium">
+            <BookOpen className="w-3.5 h-3.5 text-stone-400 shrink-0" />
             <span>“书籍是屹立在时间的汪洋大海中的灯塔。”</span>
             <span className="text-stone-400 font-sans not-italic text-[10px]">
               — 惠普尔
@@ -4365,11 +4379,11 @@ export default function App() {
 
           {/* Row 2: Website Declaration */}
           <p className="text-[10px] text-stone-400/90 max-w-3xl text-center leading-relaxed font-sans">
-            Copyright @ InstaBook &nbsp;&nbsp; 本平台内容由 InstaBook
-            智能算法推理生成，仅供个人学术探讨及交流品鉴
+            Copyright @ InstaBook &nbsp;&nbsp; 本平台书籍由 InstaBook 瞬书 强力驱动生成，仅供个人阅读品鉴
           </p>
         </div>
       </footer>
+      <FireworksOverlay />
     </div>
   );
 }
