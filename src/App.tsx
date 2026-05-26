@@ -2608,26 +2608,28 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-6 pt-8 border-t border-stone-100 animate-fade-in animate-duration-300">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-bold flex items-center gap-3 text-stone-800">
+                    <div className="flex items-center justify-between mb-2 gap-4">
+                      <h3 className="text-lg font-bold flex items-center gap-2.5 text-stone-900 min-w-0">
                         {stopRequested ? (
-                          <CircleSlash2 className="w-5 h-5 text-stone-400" />
+                          <CircleSlash2 className="w-5 h-5 text-stone-400 shrink-0" />
                         ) : (
-                          <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+                          <Loader2 className="w-5 h-5 animate-spin text-emerald-600 shrink-0" />
                         )}
-                        {stopRequested
-                          ? "生成已中止"
-                          : "正在策划您的书籍大纲与篇章结构..."}
+                        <span className="truncate">
+                          {stopRequested
+                            ? "生成已中止"
+                            : "正在策划您的书籍大纲与篇章结构..."}
+                        </span>
                       </h3>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 shrink-0">
                         {!stopRequested && (
                           <button
                             onClick={stopGeneration}
-                            className="text-stone-500 hover:text-red-500 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium cursor-pointer"
+                            className="bg-white text-stone-500 hover:text-red-650 border border-stone-200 hover:border-red-200/60 shadow-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all text-xs font-semibold cursor-pointer shrink-0 select-none whitespace-nowrap"
                           >
-                            <Square className="w-4 h-4 fill-current text-stone-400 hover:text-red-400" />
-                            停止生成
+                            <Square className="w-3 h-3 fill-current text-stone-400" />
+                            <span>停止生成</span>
                           </button>
                         )}
                       </div>
@@ -2635,11 +2637,20 @@ export default function App() {
 
                     <div className="space-y-4">
                       <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-stone-400 shrink-0" />
-                          <span className="text-stone-600 font-medium text-sm">
+                        <div className="flex items-center gap-2.5">
+                          {stopRequested ? (
+                            <CircleSlash2 className="w-4 h-4 text-stone-400 shrink-0" />
+                          ) : (
+                            <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
+                          )}
+                          <span className={`${stopRequested ? "text-stone-500" : "text-emerald-700 font-semibold animate-pulse"} text-sm`}>
                             正在撰写出版大纲与章节结构
                           </span>
+                          {!stopRequested && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-mono shrink-0 bg-emerald-50 text-emerald-600 border border-emerald-100 font-medium animate-pulse">
+                              撰写中...
+                            </span>
+                          )}
                         </div>
                         {outlineProgressText && (
                           <div className="p-3 bg-stone-50 rounded-lg border border-stone-200 max-h-48 overflow-y-auto w-full">
@@ -2653,15 +2664,15 @@ export default function App() {
                       {/* Detailed AI Process Logs */}
                       <div className="pt-6 border-t border-stone-100 font-sans">
                         <div className="flex items-center gap-2 mb-3 text-stone-400">
-                          <Activity className="w-4 h-4" />
-                          <span className="text-xs font-medium uppercase tracking-wider text-stone-500">
+                          <Activity className="w-4 h-4 animate-pulse" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-stone-550">
                             AI 工作日志
                           </span>
                         </div>
-                        <div className="bg-black rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] leading-relaxed relative border border-green-900/30 overflow-x-hidden">
+                        <div className="bg-stone-50 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] leading-relaxed relative border border-stone-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] overflow-x-hidden custom-scrollbar">
                           <div className="space-y-1.5 relative z-10">
                             {logs.length === 0 ? (
-                              <div className="text-green-900 italic">
+                              <div className="text-stone-400 italic">
                                 等待工作指令...
                               </div>
                             ) : (
@@ -2670,16 +2681,16 @@ export default function App() {
                                   key={i}
                                   className={`flex gap-3 ${
                                     log.type === "error"
-                                      ? "text-red-500"
+                                      ? "text-red-500 text-left"
                                       : log.type === "success"
-                                        ? "text-green-300 font-bold"
-                                        : "text-[#00FF41]"
+                                        ? "text-emerald-600 font-semibold text-left"
+                                        : "text-stone-600 text-left"
                                   }`}
                                 >
-                                  <span className="text-green-900 shrink-0">
+                                  <span className="text-stone-400 shrink-0">
                                     [{log.timestamp}]
                                   </span>
-                                  <span className="break-all opacity-90">
+                                  <span className="break-all opacity-90 text-left">
                                     {log.message}
                                   </span>
                                 </div>
@@ -2687,8 +2698,6 @@ export default function App() {
                             )}
                             <div ref={logEndRef} />
                           </div>
-                          {/* Matrix scanline effect */}
-                          <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px]"></div>
                         </div>
                       </div>
                     </div>
@@ -3288,22 +3297,22 @@ export default function App() {
               </div>
 
               <div className="bg-white/30 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-white/30">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold flex items-center gap-2.5 text-stone-900">
+                <div className="flex items-center justify-between mb-6 gap-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2.5 text-stone-900 min-w-0">
                     {isFullyCompleted ? (
                       <>
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                        <span>编撰完成</span>
+                        <span className="truncate">编撰完成</span>
                       </>
                     ) : isGeneratingOutline || generatingChapterIdx !== null ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin text-stone-500 shrink-0" />
-                        <span>编撰进行中...</span>
+                        <Loader2 className="w-5 h-5 animate-spin text-emerald-600 shrink-0" />
+                        <span className="truncate">编撰进行中...</span>
                       </>
                     ) : (
                       <>
                         <CircleSlash2 className="w-5 h-5 text-stone-400 shrink-0" />
-                        <span>生成已中止</span>
+                        <span className="truncate">生成已中止</span>
                       </>
                     )}
                   </h3>
@@ -3311,9 +3320,10 @@ export default function App() {
                   {(isGeneratingOutline || generatingChapterIdx !== null) && (
                     <button
                       onClick={stopGeneration}
-                      className="text-stone-500 hover:text-red-500 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium border border-stone-200 hover:border-red-200 cursor-pointer"
+                      className="bg-white text-stone-500 hover:text-red-555 border border-stone-200 hover:border-red-200/60 shadow-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all text-xs font-semibold cursor-pointer shrink-0 select-none whitespace-nowrap"
                     >
-                      <Square className="w-3" /> 停止
+                      <Square className="w-3 h-3 fill-current text-stone-400" />
+                      <span>停止生成</span>
                     </button>
                   )}
                 </div>
