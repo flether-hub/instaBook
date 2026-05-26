@@ -327,9 +327,13 @@ export default function App() {
       setOutline(book.outline);
       setChaptersContent(book.chaptersContent || {});
       setCompletedChapters(book.completedChapters || []);
-      const virtualModel = book.virtualModel || mapActualModelToVirtual(book.modelUsed);
-      setTargetModel(virtualModel);
-      setConfigActiveModel(virtualModel);
+      const bookVirtualModel = book.virtualModel || mapActualModelToVirtual(book.modelUsed);
+      // 尊重用户当前已激活并选择的模型。只有当系统当前未设定任何模型时，才采用书籍原来的模型作为默认配置
+      if (!targetModel) {
+        setTargetModel(bookVirtualModel);
+        setConfigActiveModel(bookVirtualModel);
+        localStorage.setItem("instabook-targetModel", bookVirtualModel);
+      }
       setCurrentBookId(book.id);
 
       // Store to localStorage to maintain state persistence across refresh
@@ -345,10 +349,12 @@ export default function App() {
         "instabook-detailedRequirements",
         book.detailedRequirements || "",
       );
-      localStorage.setItem(
-        "instabook-targetModel",
-        virtualModel,
-      );
+      if (!localStorage.getItem("instabook-targetModel")) {
+        localStorage.setItem(
+          "instabook-targetModel",
+          bookVirtualModel,
+        );
+      }
       localStorage.setItem("instabook-currentBookId", book.id);
 
       if (book.outline) {
@@ -936,6 +942,7 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [revealKeys, setRevealKeys] = useState(false);
 
   // Load database books on website mount
   useEffect(() => {
@@ -1175,7 +1182,30 @@ export default function App() {
     }
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
+    // 检查是否有 API Key 长度过短，或者可能被浏览器自动填充了登录密码
+    const dsKeyText = dsKey || "";
+    const geminiKeyText = geminiKey || "";
+    const qwenKeyText = qwenKey || "";
+
+    const isSuspiciousDs = dsKeyText.trim().length > 0 && dsKeyText.trim().length < 15;
+    const isSuspiciousGemini = geminiKeyText.trim().length > 0 && geminiKeyText.trim().length < 15;
+    const isSuspiciousQwen = qwenKeyText.trim().length > 0 && qwenKeyText.trim().length < 15;
+
+    if (isSuspiciousDs || isSuspiciousGemini || isSuspiciousQwen) {
+      let msg = "⚠️ 系统检测到您保存的以下 AI 接口 API Key 长度异常（极有可能被浏览器将后台密码自动填充了进去）：\n\n";
+      if (isSuspiciousDs) msg += `- DeepSeek Key：当前值为 "${dsKeyText.trim()}" (长度 ${dsKeyText.trim().length} 位)\n`;
+      if (isSuspiciousGemini) msg += `- Gemini Key：当前值为 "${geminiKeyText.trim()}" (长度 ${geminiKeyText.trim().length} 位)\n`;
+      if (isSuspiciousQwen) msg += `- Qwen Key：当前值为 "${qwenKeyText.trim()}" (长度 ${qwenKeyText.trim().length} 位)\n`;
+      
+      msg += "\n说明：真实的 API Key 长度通常均在 35 位以上（例如以 sk-... 或 AIzaSy... 开头）。请勾选右上角“显示明文 Key”重新核对填写，不要把管理登录密码保存在这里。\n\n您依然要强制使用这些填入的值吗？";
+
+      const confirmSave = await showCustomConfirm("API Key 长度异常拦截", msg, "强制保存", "返回修改");
+      if (!confirmSave) {
+        return;
+      }
+    }
+
     // Save current active model configuration
     setTargetModel(configActiveModel);
     localStorage.setItem("instabook-targetModel", configActiveModel);
@@ -1414,6 +1444,11 @@ export default function App() {
     const chapters = bookOutline.chapters || [];
     let currentChaptersContent = { ...chaptersContent };
     let currentCompletedChapters = [...completedChapters];
+
+    addLog(`✍️ 续写模块启动！将使用您当前已激活的模型 [${getDisplayModelName(targetModel)}] 进行后续章节的编撰。`, "info");
+    if (currentCompletedChapters.length > 0) {
+      addLog(`📈 发现已有 ${currentCompletedChapters.length} 个章节存在本地存盘或已完成。系统将安全跳过这些章节，并一键续写剩余未完章节！`, "success");
+    }
 
     for (let i = 0; i < chapters.length; i++) {
       if (currentCompletedChapters.includes(i)) continue; // Skip already completed chapters
@@ -3718,9 +3753,20 @@ export default function App() {
             <div className="px-3.5 md:px-8 py-3.5 md:py-6 overflow-y-auto space-y-3.5 md:space-y-6 flex-grow">
               {adminTab === "config" ? (
                 <>
-                  <p className="text-stone-500 text-xs md:text-sm leading-relaxed">
-                    配置专属 API Key 与模型 ID。点击右侧「设为激活」切换系统默认模型。
-                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-50 p-3 rounded-xl border border-stone-200/60 shadow-xs">
+                    <p className="text-stone-500 text-xs md:text-sm leading-relaxed">
+                      配置专属 API Key 与模型 ID。点击右侧「设为激活」切换系统默认模型。
+                    </p>
+                    <label className="flex items-center gap-1.5 text-xs text-stone-600 hover:text-stone-850 cursor-pointer shrink-0 py-1.5 px-2.5 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-all select-none font-medium shadow-xs">
+                      <input
+                        type="checkbox"
+                        className="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer accent-emerald-600"
+                        checked={revealKeys}
+                        onChange={(e) => setRevealKeys(e.target.checked)}
+                      />
+                      <span>显示明文 Key</span>
+                    </label>
+                  </div>
 
                   {/* DeepSeek */}
                   <div className="p-3 shadow-xs bg-stone-50/80 rounded-xl md:rounded-2xl border border-stone-200/50 space-y-3">
@@ -3751,7 +3797,8 @@ export default function App() {
                           自定义 API Key
                         </label>
                         <input
-                          type="password"
+                          type={revealKeys ? "text" : "password"}
+                          autoComplete="new-password"
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={dsKey}
                           onChange={(e) => setDsKey(e.target.value)}
@@ -3800,7 +3847,8 @@ export default function App() {
                           自定义 API Key
                         </label>
                         <input
-                          type="password"
+                          type={revealKeys ? "text" : "password"}
+                          autoComplete="new-password"
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={geminiKey}
                           onChange={(e) => setGeminiKey(e.target.value)}
@@ -3849,7 +3897,8 @@ export default function App() {
                           自定义 API Key (阿里百炼)
                         </label>
                         <input
-                          type="password"
+                          type={revealKeys ? "text" : "password"}
+                          autoComplete="new-password"
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={qwenKey}
                           onChange={(e) => setQwenKey(e.target.value)}
