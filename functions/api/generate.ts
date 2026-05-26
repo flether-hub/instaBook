@@ -38,11 +38,6 @@ export async function onRequestPost({ request, env }: any) {
       headers["Authorization"] = `Bearer ${cleanKey}`;
       // Add x-goog-api-key as well for broader compatibility
       headers["x-goog-api-key"] = cleanKey;
-      
-      // Fix: If model is the non-existent 3.5, fallback to 1.5 internally for Google
-      if (modelId === "gemini-3.5-flash") {
-        modelId = "gemini-1.5-flash";
-      }
     } else if (baseUrl.includes("generativelanguage")) {
       headers["x-goog-api-key"] = cleanKey;
       if (!baseUrl.includes("?key=")) {

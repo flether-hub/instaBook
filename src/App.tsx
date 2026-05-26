@@ -60,12 +60,61 @@ const banyanTreeBg = new URL(
   import.meta.url,
 ).href;
 
-const GrassTitleBarBg = () => (
-  <div className="absolute inset-x-0 bottom-0 top-0 overflow-hidden rounded-xl z-0 pointer-events-none opacity-[0.10]">
-    <svg width="100%" height="150%" className="absolute bottom-0 left-0 text-amber-600" preserveAspectRatio="none" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,100 Q5,40 15,10 Q20,60 25,100 M20,100 Q25,30 35,5 Q40,50 45,100 M40,100 Q45,20 60,0 Q55,40 65,100 M60,100 Q70,50 80,15 Q85,60 90,100 M80,100 Q90,30 105,10 Q100,60 110,100 M100,100 Q115,20 125,0 Q120,50 135,100 M130,100 Q140,40 155,5 Q150,60 160,100 M150,100 Q160,20 175,0 Q170,50 185,100 M180,100 Q190,40 205,10 Q200,60 210,100 M200,100 Q215,30 225,5 Q230,70 240,100 M230,100 Q240,20 255,0 Q250,50 265,100 M260,100 Q275,30 290,15 Q285,60 295,100 M290,100 Q305,20 315,0 Q310,50 325,100 M320,100 Q335,40 345,10 Q340,60 355,100 M350,100 Q365,20 380,0 Q375,50 385,100 M380,100 Q395,30 405,15 Q395,60 410,100 M400,100 Q410,20 420,5 Q415,60 430,100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M10,100 Q15,50 25,20 Q30,70 35,100 M30,100 Q40,30 55,10 Q50,60 60,100 M50,100 Q65,40 75,5 Q80,50 90,100 M85,100 Q95,20 110,0 Q105,60 115,100 M110,100 Q125,30 140,15 Q135,70 145,100 M140,100 Q155,20 165,0 Q160,50 175,100 M170,100 Q180,40 195,5 Q190,60 200,100 M190,100 Q200,20 215,0 Q210,50 225,100 M220,100 Q230,40 245,10 Q240,60 250,100 M240,100 Q255,30 265,5 Q270,70 280,100 M270,100 Q280,20 295,0 Q290,50 305,100 M300,100 Q315,30 330,15 Q325,60 335,100 M330,100 Q345,20 355,0 Q350,50 365,100 M360,100 Q375,40 385,10 Q380,60 395,100 M390,100 Q405,20 420,0 Q415,50 425,100" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
-      <path d="M0,100 C15,70 20,40 30,80 C40,50 50,70 60,100 C75,50 80,30 90,70 C100,50 110,60 120,100 C135,60 140,40 150,80 C160,50 170,70 180,100 C195,40 200,20 210,60 C220,40 230,50 240,100 C255,50 260,30 270,70 C280,40 290,60 300,100 C315,60 320,40 330,80 C340,50 350,70 360,100 C375,40 380,20 390,60 C400,40 410,50 420,100" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
+const DryLeavesTitleBarBg = () => (
+  <div className="absolute inset-x-0 bottom-0 top-0 overflow-hidden rounded-xl z-0 pointer-events-none opacity-[0.05]">
+    <svg width="100%" height="100%" className="absolute inset-0 text-amber-800" preserveAspectRatio="none" viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg">
+      {/* Falling dry leaves styled beautifully */}
+      {/* Leaf 1 */}
+      <g transform="translate(45, 30) rotate(15) scale(0.6)">
+        <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M 0,20 L 50,20 M 15,20 L 25,12 M 25,20 L 35,12 M 15,20 L 25,28 M 25,20 L 35,28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      {/* Leaf 2 */}
+      <g transform="translate(180, 50) rotate(-25) scale(0.5)">
+        <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M 0,20 L 50,20 M 15,20 L 25,12 M 25,20 L 35,12 M 15,20 L 25,28 M 25,20 L 35,28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      {/* Leaf 3 */}
+      <g transform="translate(320, 25) rotate(45) scale(0.7)">
+        <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M 0,20 L 50,20 M 15,20 L 25,12 M 25,20 L 35,12 M 15,20 L 25,28 M 25,20 L 35,28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      {/* Leaf 4 */}
+      <g transform="translate(480, 55) rotate(-10) scale(0.6)">
+        <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M 0,20 L 50,20 M 15,20 L 25,12 M 25,20 L 35,12 M 15,20 L 25,28 M 25,20 L 35,28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      {/* Leaf 5 */}
+      <g transform="translate(620, 20) rotate(30) scale(0.55)">
+        <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M 0,20 L 50,20 M 15,20 L 25,12 M 25,20 L 35,12 M 15,20 L 25,28 M 25,20 L 35,28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      {/* Leaf 6 */}
+      <g transform="translate(740, 45) rotate(-35) scale(0.65)">
+        <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M 0,20 L 50,20 M 15,20 L 25,12 M 25,20 L 35,12 M 15,20 L 25,28 M 25,20 L 35,28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      
+      {/* Subtle branch curves */}
+      <path d="M-10,40 Q100,20 200,50" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3" strokeDasharray="3 3" />
+      <path d="M300,60 Q450,40 600,70" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3" strokeDasharray="3 3" />
+      <path d="M600,30 Q700,20 810,40" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3" strokeDasharray="3 3" />
+
+      {/* Scattered background leaf veins with high transparency */}
+      <g opacity="0.4">
+        <g transform="translate(110, 15) rotate(70) scale(0.4)">
+          <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </g>
+        <g transform="translate(250, 20) rotate(-15) scale(0.45)">
+          <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </g>
+        <g transform="translate(400, 45) rotate(110) scale(0.4)">
+          <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </g>
+        <g transform="translate(560, 35) rotate(-55) scale(0.48)">
+          <path d="M 0,20 C 15,5 35,5 50,20 C 35,35 15,35 0,20 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </g>
+      </g>
     </svg>
   </div>
 );
@@ -2421,7 +2470,7 @@ export default function App() {
             <div className="lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print">
               {/* Premium Top Action Row - Highly Polished & Sticky */}
               <div className="relative z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden">
-                <GrassTitleBarBg />
+                <DryLeavesTitleBarBg />
                 <span className="relative z-10 text-xs font-bold text-amber-950 font-sans tracking-wide pl-1 flex items-center gap-2">
                   <BrandLogo className="w-4 h-4 text-amber-600" />
                   最近制作的书籍
@@ -2936,7 +2985,7 @@ export default function App() {
             <div className={`lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print animate-fade-in animate-duration-350 lg:overflow-y-auto lg:pb-8 custom-scrollbar lg:pr-2 ${mobileWorkTab === "control" ? "block" : "hidden lg:block"}`}>
               {/* Premium Top Action Row - Highly Polished & Sticky */}
               <div className="sticky top-0 z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden">
-                <GrassTitleBarBg />
+                <DryLeavesTitleBarBg />
                 <span className="relative z-10 text-xs font-bold text-amber-950 font-sans tracking-wide pl-1 flex items-center gap-2 shrink-0 whitespace-nowrap">
                   <BrandLogo className="w-4 h-4 text-amber-600 shrink-0" />
                   书籍操作

@@ -43,9 +43,6 @@ export async function onRequestGet({ request, env }: any) {
     if (baseUrl.includes("generativelanguage.googleapis.com/v1beta/openai") || (baseUrl.includes("generativelanguage") && baseUrl.includes("/openai"))) {
       headers["Authorization"] = `Bearer ${cleanKey}`;
       headers["x-goog-api-key"] = cleanKey;
-      if (modelId === "gemini-3.5-flash") {
-        modelId = "gemini-1.5-flash";
-      }
     } else if (baseUrl.includes("generativelanguage")) {
       headers["x-goog-api-key"] = cleanKey;
       if (!baseUrl.includes("?key=")) {
