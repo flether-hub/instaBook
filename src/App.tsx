@@ -826,16 +826,19 @@ export default function App() {
             localStorage.setItem("instabook-apikey-gemini-2.5-pro", data["instabook-apikey-gemini"]);
             localStorage.setItem("instabook-apikey-gemini-1.5-pro", data["instabook-apikey-gemini"]);
           }
-          if (data["instabook-realmodel-gemini-2.5-pro"]) {
+          if (data["instabook-realmodel-gemini"]) {
+            const val = data["instabook-realmodel-gemini"].trim();
+            setGeminiReal(val);
+            localStorage.setItem("instabook-realmodel-gemini", val);
+            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", val);
+            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", val);
+          } else if (data["instabook-realmodel-gemini-2.5-pro"]) {
             const val = data["instabook-realmodel-gemini-2.5-pro"].trim();
-            const finalVal = (!val || val === "gemini-2.5-pro" || val === "gemini-1.5-pro" || val === "gemini-3.5-flash") ? "gemini-3.5-flash" : val;
-            setGeminiReal(finalVal);
-            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", finalVal);
-            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", finalVal);
+            setGeminiReal(val);
+            localStorage.setItem("instabook-realmodel-gemini", val);
+            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", val);
           } else {
             setGeminiReal("gemini-3.5-flash");
-            localStorage.setItem("instabook-realmodel-gemini-2.5-pro", "gemini-3.5-flash");
-            localStorage.setItem("instabook-realmodel-gemini-1.5-pro", "gemini-3.5-flash");
           }
           if (data["instabook-apikey-qwen"]) {
             setQwenKey(data["instabook-apikey-qwen"]);
@@ -950,6 +953,7 @@ export default function App() {
       "instabook-apikey-deepseek": dsKey,
       "instabook-realmodel-deepseek": dsReal,
       "instabook-apikey-gemini": geminiKey,
+      "instabook-realmodel-gemini": geminiReal,
       "instabook-realmodel-gemini-2.5-pro": geminiReal,
       "instabook-apikey-qwen": qwenKey,
       "instabook-realmodel-qwen": qwenReal

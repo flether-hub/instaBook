@@ -30,7 +30,9 @@ async function callAPI(prompt: string, model: string, isJson: boolean = false, o
   if (m.includes("gemini")) {
     clientApiKey = localStorage.getItem("instabook-apikey-gemini") || "";
     clientBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-    realModel = localStorage.getItem(`instabook-realmodel-${model}`) || model;
+    realModel = localStorage.getItem("instabook-realmodel-gemini") || 
+                localStorage.getItem(`instabook-realmodel-${model}`) || 
+                model;
   } else if (m.includes("deepseek")) {
     clientApiKey = localStorage.getItem("instabook-apikey-deepseek") || "";
     clientBaseUrl = "https://api.deepseek.com/v1/chat/completions";
@@ -182,7 +184,9 @@ export const testConnection = async (model: string): Promise<{ ok: boolean, mess
     if (m.includes("gemini")) {
       clientApiKey = localStorage.getItem("instabook-apikey-gemini") || "";
       clientBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-      realModel = localStorage.getItem(`instabook-realmodel-${model}`) || model;
+      realModel = localStorage.getItem("instabook-realmodel-gemini") || 
+                  localStorage.getItem(`instabook-realmodel-${model}`) || 
+                  model;
     } else if (m.includes("deepseek")) {
       clientApiKey = localStorage.getItem("instabook-apikey-deepseek") || "";
       clientBaseUrl = "https://api.deepseek.com/v1/chat/completions";
