@@ -3949,7 +3949,7 @@ export default function App() {
                                       <span>
                                         模型:{" "}
                                         <strong className="text-stone-700 font-bold font-mono text-[11px]">
-                                          {getDisplayModelName(item.modelUsed)}
+                                          {item.modelUsed || "未知"}
                                         </strong>
                                       </span>
                                     </div>
