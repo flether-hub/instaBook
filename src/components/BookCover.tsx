@@ -28,6 +28,40 @@ export function BookCover({
   // Use picsum.photos for random but seeded free images
   const bgImageUrl = `https://picsum.photos/seed/${Math.abs(seed)}/1450/2100`;
 
+  // Dynamically calculate font size and center text styled for 1-2 lines
+  const titleStyle = useMemo(() => {
+    const len = title ? title.length : 3;
+    let fontSizePx = 64; // Default large font size
+    
+    if (len > 6) {
+      // Determine columns to split characters into 1 or 2 lines
+      const bestLineLength = len <= 10 ? len : Math.ceil(len / 2);
+      const targetWidth = 380; // Target safe width for text within the cover padding
+      fontSizePx = Math.floor(targetWidth / bestLineLength);
+      // Clamp between 28px and 64px to ensure readability
+      fontSizePx = Math.max(28, Math.min(64, fontSizePx));
+    }
+    
+    return {
+      fontSize: `${fontSizePx}px`,
+      lineHeight: '1.3',
+      display: '-webkit-box',
+      WebkitLineClamp: '2',
+      WebkitBoxOrient: 'vertical' as const,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      width: '100%',
+      textAlign: 'center' as const,
+      color: '#BF953F', 
+      background: 'linear-gradient(135deg, #FCF6BA 0%, #BF953F 50%, #B38728 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      fontFamily: 'SimHei',
+      filter: 'drop-shadow(0 10px 10px rgba(0,0,0,0.5))'
+    };
+  }, [title]);
+
   return (
     <div 
       id="book-cover-to-capture" 
@@ -121,16 +155,8 @@ export function BookCover({
         {/* Title Section (Centered) */}
         <div className="flex-grow flex flex-col justify-center items-center text-center">
            <h1 
-             className="text-5xl md:text-6xl lg:text-7xl font-black tracking-widest leading-tight"
-             style={{ 
-               color: '#BF953F', 
-               background: 'linear-gradient(135deg, #FCF6BA 0%, #BF953F 50%, #B38728 100%)',
-               WebkitBackgroundClip: 'text',
-               WebkitTextFillColor: 'transparent',
-               backgroundClip: 'text',
-               fontFamily: 'SimHei',
-               filter: 'drop-shadow(0 10px 10px rgba(0,0,0,0.5))'
-             }}
+             className="font-black tracking-widest text-center"
+             style={titleStyle}
            >
              {title || "未命名"}
            </h1>
