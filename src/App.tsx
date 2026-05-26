@@ -546,6 +546,9 @@ export default function App() {
   const [generatingChapterIdx, setGeneratingChapterIdx] = useState<
     number | null
   >(null);
+  const [rewritingChapterIdx, setRewritingChapterIdx] = useState<
+    number | null
+  >(null);
   const [completedChapters, setCompletedChapters] = useState<number[]>([]);
   const [stopRequested, setStopRequested] = useState(false);
   const stopRef = useRef(false);
@@ -1566,6 +1569,136 @@ export default function App() {
     if (!stopRef.current) {
       setGeneratingChapterIdx(null);
     }
+  };
+
+  const triggerChapterRewrite = async (chapterIdx: number) => {
+    if (!outline || isGeneratingOutline || generatingChapterIdx !== null || rewritingChapterIdx !== null) return;
+
+    // Save previous state as memory backup in case of DB read error
+    const prevChaptersContent = { ...chaptersContent };
+    const prevCompletedChapters = [...completedChapters];
+
+    setRewritingChapterIdx(chapterIdx);
+    setGeneratingChapterIdx(chapterIdx);
+    stopRef.current = false;
+    setStopRequested(false);
+    contentBufferRef.current = "";
+    lastUpdateRef.current = Date.now();
+    lastSavedChapterPagesRef.current = 1;
+
+    addLog(`🔄 开启章节重写：开始重新编撰第 ${chapterIdx + 1} 章：《${outline.chapters[chapterIdx].title}》`, "info");
+    
+    // Clear and reset state of target chapter so that generation writes it clean
+    setChaptersContent(prev => ({ ...prev, [chapterIdx]: "" }));
+
+    let success = false;
+    let retries = 3;
+    let backoffMs = 15000;
+
+    while (!success && retries > 0 && !stopRef.current) {
+      try {
+        abortControllerRef.current = new AbortController();
+        const content = await generateChapterContent(
+          outline,
+          chapterIdx,
+          genre,
+          writingStyle,
+          detailedRequirements,
+          targetModel,
+          (text) => {
+            contentBufferRef.current = text;
+            const now = Date.now();
+            const currentChapterPages = splitIntoPages(text, false, true).length;
+            if (currentChapterPages > lastSavedChapterPagesRef.current) {
+              lastSavedChapterPagesRef.current = currentChapterPages;
+              setChaptersContent(prev => ({ ...prev, [chapterIdx]: text }));
+              addLog(`⚡ 第 ${chapterIdx + 1} 章已生成新一页 (第 ${currentChapterPages} 页)，实时暂存`, "success");
+              lastUpdateRef.current = now;
+            } else if (now - lastUpdateRef.current > 500) {
+              setChaptersContent(prev => ({ ...prev, [chapterIdx]: text }));
+              lastUpdateRef.current = now;
+            }
+          },
+          abortControllerRef.current.signal,
+          chaptersContent, // Send context of current book outline/chapters
+        );
+
+        if (stopRef.current) break;
+
+        const updatedChaptersContent = { ...chaptersContent, [chapterIdx]: content };
+        setChaptersContent(updatedChaptersContent);
+        
+        const updatedCompleted = Array.from(new Set([...completedChapters, chapterIdx])).sort((a, b) => a - b);
+        setCompletedChapters(updatedCompleted);
+
+        // Save progress to browser local storage
+        saveProgressToBrowser(updatedChaptersContent, updatedCompleted);
+        addLog(`第 ${chapterIdx + 1} 章重写并编撰完成！`, "success");
+
+        // Overwrite full book in Database
+        addLog(`📂 正在同步覆盖保存全新的全书内容与页码至系统库...`, "success");
+        await saveBookToDatabase(currentBookId, outline, updatedChaptersContent, updatedCompleted);
+
+        success = true;
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          addLog("章节重写流程已手动中止。", "info");
+          break;
+        }
+        console.error("Error and retrying chapter rewrite:", error);
+        retries--;
+        if (retries > 0 && !stopRef.current) {
+          addLog(`⚠️ 重损及服务器抖动：将在 ${(backoffMs / 1000).toFixed(0)} 秒后进行第 ${3 - retries} 次自动重重试...`, "error");
+          await sleep(backoffMs);
+          backoffMs *= 1.5;
+        } else {
+          addLog(`❌ 第 ${chapterIdx + 1} 章重写彻底失败！`, "error");
+        }
+      }
+    }
+
+    // Restoration on failure or interrupt
+    if (stopRef.current || !success) {
+      addLog("⚠️ 章节重写已中止或发生网络故障。系统正在从云端/本地数据库恢复加载这整本书籍之前的完好状态...", "info");
+      try {
+        const originalBook = await getBook(currentBookId);
+        if (originalBook) {
+          setTopic(originalBook.topic || "");
+          setAuthorName(originalBook.author || "");
+          setGenre(originalBook.genre || "");
+          setWordCount(originalBook.wordCount || 2000);
+          setWritingStyle(originalBook.writingStyle || "");
+          setDetailedRequirements(originalBook.detailedRequirements || "");
+          setOutline(originalBook.outline);
+          const dbChaptersContent: Record<number, string> = {};
+          if (originalBook.chaptersContent) {
+            Object.entries(originalBook.chaptersContent).forEach(([key, val]) => {
+              dbChaptersContent[Number(key)] = String(val);
+            });
+          }
+          const dbCompletedChapters = (originalBook.completedChapters || []).map((x: any) => Number(x));
+          setChaptersContent(dbChaptersContent);
+          setCompletedChapters(dbCompletedChapters);
+          
+          saveProgressToBrowser(dbChaptersContent, dbCompletedChapters);
+          addLog("✅ 本地工作空间已全量恢复还原至重新撰写之前的完好状态！", "success");
+        } else {
+          // Double fallback to in-memory state in case entry is empty
+          setChaptersContent(prevChaptersContent);
+          setCompletedChapters(prevCompletedChapters);
+          saveProgressToBrowser(prevChaptersContent, prevCompletedChapters);
+          addLog("📂 云数据库恢复异常，已紧急从内存高速缓存副本进行无缝回滚！", "success");
+        }
+      } catch (err: any) {
+        console.error("Failed to restore original book:", err);
+        setChaptersContent(prevChaptersContent);
+        setCompletedChapters(prevCompletedChapters);
+        saveProgressToBrowser(prevChaptersContent, prevCompletedChapters);
+      }
+    }
+
+    setRewritingChapterIdx(null);
+    setGeneratingChapterIdx(null);
   };
 
   const exportProject = async () => {
@@ -3332,6 +3465,8 @@ export default function App() {
                   {(outline.chapters || []).map((chap, idx) => {
                     const isCompleted = completedChapters.includes(idx);
                     const isGenerating = generatingChapterIdx === idx;
+                    const isThisRewriting = rewritingChapterIdx === idx;
+                    const anotherRewriting = rewritingChapterIdx !== null && rewritingChapterIdx !== idx;
                     const content = chaptersContent[idx] || "";
                     let pageText = "";
                     if (isCompleted || isGenerating) {
@@ -3358,7 +3493,27 @@ export default function App() {
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 max-w-[73%]">
-                          {isCompleted ? (
+                          {isFullyCompleted ? (
+                            <button
+                              disabled={anotherRewriting}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!anotherRewriting) {
+                                  triggerChapterRewrite(idx);
+                                }
+                              }}
+                              className={`p-1 rounded-full transition-all focus:outline-none shrink-0 ${
+                                isThisRewriting
+                                  ? "text-emerald-700 bg-emerald-50/80 cursor-default"
+                                  : anotherRewriting
+                                    ? "text-stone-300 opacity-40 cursor-not-allowed"
+                                    : "text-stone-400 hover:text-emerald-600 hover:bg-stone-100 cursor-pointer"
+                              }`}
+                              title={isThisRewriting ? "正在置中重写" : anotherRewriting ? "请等待其他章节重写..." : "重写这一章节"}
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isThisRewriting ? "animate-spin text-emerald-600" : ""}`} />
+                            </button>
+                          ) : isCompleted ? (
                             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform" />
                           ) : isGenerating ? (
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
