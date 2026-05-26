@@ -2406,7 +2406,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-[10px] text-stone-400/90 max-w-3xl text-center leading-relaxed font-sans">
-              Copyright @ InstaBook &nbsp;&nbsp; 本平台书籍由 InstaBook 瞬书 强力驱动生成，仅供个人阅读品鉴
+              Copyright @InstaBook &nbsp;&nbsp; 本平台书籍由InstaBook瞬书强力驱动生成，仅供个人阅读品鉴
             </p>
           </div>
         </footer>
@@ -3363,7 +3363,10 @@ export default function App() {
                       全书完
                     </p>
                     <p className="mt-8 text-sm text-stone-400 font-sans tracking-wide">
-                      本著作由 InstaBook 瞬书 强力驱动生成
+                      本著作由InstaBook瞬书强力驱动生成
+                    </p>
+                    <p className="mt-2 text-xs text-stone-400/80 font-sans tracking-wide">
+                      Copyright @InstaBook
                     </p>
                   </div>
                 </div>
@@ -4379,7 +4382,7 @@ export default function App() {
 
           {/* Row 2: Website Declaration */}
           <p className="text-[10px] text-stone-400/90 max-w-3xl text-center leading-relaxed font-sans">
-            Copyright @ InstaBook &nbsp;&nbsp; 本平台书籍由 InstaBook 瞬书 强力驱动生成，仅供个人阅读品鉴
+            Copyright @InstaBook &nbsp;&nbsp; 本平台书籍由InstaBook瞬书强力驱动生成，仅供个人阅读品鉴
           </p>
         </div>
       </footer>
