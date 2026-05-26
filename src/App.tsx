@@ -942,7 +942,6 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [revealKeys, setRevealKeys] = useState(false);
 
   // Load database books on website mount
   useEffect(() => {
@@ -960,7 +959,6 @@ export default function App() {
     setIsLoggedIn(false);
     sessionStorage.removeItem("isLoggedIn");
     addLog("🔒 成功退出管理员登录模式", "info");
-    showCustomAlert("退出登录", "已退出管理员后台模式！");
   };
 
   // Custom API keys and model override states
@@ -1198,7 +1196,7 @@ export default function App() {
       if (isSuspiciousGemini) msg += `- Gemini Key：当前值为 "${geminiKeyText.trim()}" (长度 ${geminiKeyText.trim().length} 位)\n`;
       if (isSuspiciousQwen) msg += `- Qwen Key：当前值为 "${qwenKeyText.trim()}" (长度 ${qwenKeyText.trim().length} 位)\n`;
       
-      msg += "\n说明：真实的 API Key 长度通常均在 35 位以上（例如以 sk-... 或 AIzaSy... 开头）。请勾选右上角“显示明文 Key”重新核对填写，不要把管理登录密码保存在这里。\n\n您依然要强制使用这些填入的值吗？";
+      msg += "\n说明：真实的 API Key 长度通常均在 35 位以上（例如以 sk-... 或 AIzaSy... 开头）。请重新核对，不要把管理员后台的登录密码错保存在这里。\n\n您依然要强制使用这些填入的值吗？";
 
       const confirmSave = await showCustomConfirm("API Key 长度异常拦截", msg, "强制保存", "返回修改");
       if (!confirmSave) {
@@ -3753,20 +3751,9 @@ export default function App() {
             <div className="px-3.5 md:px-8 py-3.5 md:py-6 overflow-y-auto space-y-3.5 md:space-y-6 flex-grow">
               {adminTab === "config" ? (
                 <>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-50 p-3 rounded-xl border border-stone-200/60 shadow-xs">
-                    <p className="text-stone-500 text-xs md:text-sm leading-relaxed">
-                      配置专属 API Key 与模型 ID。点击右侧「设为激活」切换系统默认模型。
-                    </p>
-                    <label className="flex items-center gap-1.5 text-xs text-stone-600 hover:text-stone-850 cursor-pointer shrink-0 py-1.5 px-2.5 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-all select-none font-medium shadow-xs">
-                      <input
-                        type="checkbox"
-                        className="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer accent-emerald-600"
-                        checked={revealKeys}
-                        onChange={(e) => setRevealKeys(e.target.checked)}
-                      />
-                      <span>显示明文 Key</span>
-                    </label>
-                  </div>
+                  <p className="text-stone-500 text-xs md:text-sm leading-relaxed">
+                    配置专属 API Key 与模型 ID。点击右侧「设为激活」切换系统默认模型。
+                  </p>
 
                   {/* DeepSeek */}
                   <div className="p-3 shadow-xs bg-stone-50/80 rounded-xl md:rounded-2xl border border-stone-200/50 space-y-3">
@@ -3797,7 +3784,7 @@ export default function App() {
                           自定义 API Key
                         </label>
                         <input
-                          type={revealKeys ? "text" : "password"}
+                          type="password"
                           autoComplete="new-password"
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={dsKey}
@@ -3847,7 +3834,7 @@ export default function App() {
                           自定义 API Key
                         </label>
                         <input
-                          type={revealKeys ? "text" : "password"}
+                          type="password"
                           autoComplete="new-password"
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={geminiKey}
@@ -3897,7 +3884,7 @@ export default function App() {
                           自定义 API Key (阿里百炼)
                         </label>
                         <input
-                          type={revealKeys ? "text" : "password"}
+                          type="password"
                           autoComplete="new-password"
                           className="w-full px-3 py-2 bg-white border border-stone-250/75 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-xs"
                           value={qwenKey}
