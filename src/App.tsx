@@ -1125,20 +1125,13 @@ export default function App() {
     if (m.includes("deepseek")) {
       return !!dsKey;
     }
-    if (m.includes("glm")) {
-      const customKey =
-        localStorage.getItem(`instabook-apikey-${modelName}`) ||
-        localStorage.getItem("instabook-apikey-glm");
-      return !!customKey;
-    }
     if (m.includes("qwen")) {
       return !!qwenKey;
     }
     return (
       !!dsKey ||
       !!geminiKey ||
-      !!qwenKey ||
-      !!localStorage.getItem("instabook-apikey-glm")
+      !!qwenKey
     );
   };
 
@@ -1396,6 +1389,7 @@ export default function App() {
           setOutlineProgressText(text);
         },
         abortControllerRef.current.signal,
+        wordCount,
       );
       addLog("书籍大纲策划完成！", "success");
       setOutline(generatedOutline);
@@ -1411,15 +1405,7 @@ export default function App() {
       console.error("Error generating outline:", error);
       let errorMessage = error?.message || String(error);
       addLog(`生成大纲失败: ${errorMessage}`, "error");
-      if (
-        errorMessage.includes("API key not valid") ||
-        errorMessage.includes("API_KEY_INVALID") ||
-        errorMessage.includes("not found in environment variables")
-      ) {
-        errorMessage =
-          "API Key 无效或未配置。请点击右上角进入「管理员配置」重新设置可用的 API Key、自定义模型名或检测接通状态。";
-      }
-      await showCustomAlert("生成大纲失败", `生成大纲失败，请重试。\n错误信息: ${errorMessage}`);
+      await showCustomAlert("生成大纲失败", `❌ 策划书籍大纲及结构时发生错误，请重试！您可以在下方的日志栏查看详细的错误原因。`);
       setIsGeneratingOutline(false);
     }
   };
@@ -1452,6 +1438,11 @@ export default function App() {
       if (currentCompletedChapters.includes(i)) continue; // Skip already completed chapters
 
       if (stopRef.current) break;
+
+      // 如果续写该未完成章节，将其之前的半截残存内容/错误字符清空，从头全新重写，保障完整性与连贯性
+      currentChaptersContent = { ...currentChaptersContent, [i]: "" };
+      setChaptersContent(currentChaptersContent);
+
       setGeneratingChapterIdx(i);
       addLog(`正在编撰第 ${i + 1} 章: ${chapters[i].title}...`, "info");
       contentBufferRef.current = "";
@@ -1466,10 +1457,9 @@ export default function App() {
         try {
           abortControllerRef.current = new AbortController();
           const content = await generateChapterContent(
-            bookOutline.title,
+            bookOutline,
+            i,
             genre,
-            chapters[i].title,
-            chapters[i].summary,
             writingStyle,
             detailedRequirements,
             targetModel,
@@ -1490,6 +1480,7 @@ export default function App() {
               }
             },
             abortControllerRef.current.signal,
+            currentChaptersContent, // 传递当前已生成的书稿内容，使 AI 获得前文完美的过渡衔接片段
           );
 
           if (stopRef.current) break;
@@ -1556,7 +1547,7 @@ export default function App() {
           if (retries === 0 && !success && !stopRef.current) {
             setChaptersContent((prev) => ({
               ...prev,
-              [i]: `本章生成失败，请点击【续写完成】重试该章节。\n错误详情：${error?.message || "未知错误"}`,
+              [i]: `[本章因网络连接或服务商配额不足而未能完成编撰。请您稍后点击控制台内的【继续续写】重试本章节。]`,
             }));
             // Stop generating further chapters to prevent cascading failures
             setStopRequested(true);

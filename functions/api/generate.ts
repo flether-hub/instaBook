@@ -12,8 +12,6 @@ export async function onRequestPost({ request, env }: any) {
         baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
       } else if (modelId.toLowerCase().includes("deepseek")) {
         baseUrl = "https://api.deepseek.com/chat/completions";
-      } else if (modelId.toLowerCase().includes("glm")) {
-        baseUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
       } else {
         baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
       }
