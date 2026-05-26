@@ -2105,7 +2105,7 @@ export default function App() {
         Math.max(1, splitIntoPages(content, false, true).length);
 
       currentPage += chapPages;
-      return { title: chap.title, page: startPage };
+      return { title: chap.title, page: startPage, pagesCount: chapPages };
     });
 
     return {
@@ -2955,8 +2955,8 @@ export default function App() {
                         作者：{outline.author}
                       </p>
                     </div>
-                    <div className="mt-12 text-sm text-stone-500 font-serif flex flex-col gap-2">
-                      <span>{outline.publisher} 出版</span>
+                    <div className="mt-12 text-sm text-stone-500 font-serif flex flex-col gap-2 items-center">
+                      <span className="whitespace-nowrap">{outline.publisher} 出版</span>
                     </div>
                   </div>
                   <div className="book-page-preview page-break flex flex-col justify-end pb-12 mb-8 text-stone-600 text-sm font-serif">
@@ -3336,10 +3336,7 @@ export default function App() {
                     let pageText = "";
                     if (isCompleted || isGenerating) {
                       const startPage = estimatedPages.chapters[idx]?.page || 1;
-                      const currentPagesCount = Math.max(
-                        1,
-                        splitIntoPages(content, false, true).length,
-                      );
+                      const currentPagesCount = estimatedPages.chapters[idx]?.pagesCount || 1;
                       const endPage = startPage + currentPagesCount - 1;
                       if (isCompleted) {
                         pageText =
