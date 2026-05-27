@@ -3363,7 +3363,7 @@ export default function App() {
                       全书完
                     </p>
                     <p className="mt-8 text-sm text-stone-400 font-sans tracking-wide">
-                      本著作由InstaBook瞬书强力驱动生成
+                      本著作由InstaBook瞬书强力驱动生成，仅供个人阅读品鉴。
                     </p>
                     <p className="mt-2 text-xs text-stone-400/80 font-sans tracking-wide">
                       Copyright @InstaBook

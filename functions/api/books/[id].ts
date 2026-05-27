@@ -22,7 +22,12 @@ export async function onRequestGet({ env, params }: any) {
         if (typeof book.completedChapters === "string") book.completedChapters = JSON.parse(book.completedChapters);
       } catch(e) {}
 
-      return new Response(JSON.stringify(book), { headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify(book), {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        }
+      });
     } else {
       return new Response(JSON.stringify({ error: "D1 Database not bound on Cloudflare Pages" }), { status: 500 });
     }

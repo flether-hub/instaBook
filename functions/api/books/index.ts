@@ -66,7 +66,12 @@ export async function onRequestGet({ request, env }: any) {
           };
         });
 
-        return new Response(JSON.stringify({ results: summary, total }), { headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ results: summary, total }), {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+          }
+        });
       } else {
         // Fallback for non-paginated requests:
         // Even for non-paginated requests, let's only select lightweight summary fields instead of SELECT * !!
@@ -101,11 +106,21 @@ export async function onRequestGet({ request, env }: any) {
             updatedAt: b.updatedAt || new Date().toISOString()
           };
         });
-        return new Response(JSON.stringify(summary), { headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify(summary), {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+          }
+        });
       }
     } else {
       // Return empty array if not configured to prevent crashes
-      return new Response(JSON.stringify([]), { headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify([]), {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        }
+      });
     }
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });

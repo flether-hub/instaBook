@@ -43,8 +43,16 @@ async function fetchWithTimeout(resource: string, options: any = {}, timeout = 6
 export async function getBooks(page?: number, limit?: number): Promise<{ results: Partial<BookRecord>[]; total: number }> {
   // First, always check if the server-side API is available and works
   try {
-    const url = page && limit ? `/api/books?page=${page}&limit=${limit}` : "/api/books";
-    const res = await fetchWithTimeout(url);
+    const timeBuster = `_t=${Date.now()}`;
+    const url = page && limit 
+      ? `/api/books?page=${page}&limit=${limit}&${timeBuster}` 
+      : `/api/books?${timeBuster}`;
+    const res = await fetchWithTimeout(url, {
+      headers: {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+      }
+    });
     if (res.ok) {
       const data = await res.json();
       if (data && typeof data === "object" && "results" in data && Array.isArray(data.results)) {
@@ -110,7 +118,12 @@ export async function getBooks(page?: number, limit?: number): Promise<{ results
 export async function getBook(id: string): Promise<BookRecord | null> {
   // First, try from the server-side database
   try {
-    const res = await fetchWithTimeout(`/api/books/${id}`);
+    const res = await fetchWithTimeout(`/api/books/${id}?_t=${Date.now()}`, {
+      headers: {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+      }
+    });
     if (res.ok) {
       const serverBook = await res.json();
       if (serverBook && !serverBook.error) {
@@ -176,10 +189,15 @@ export async function deleteBook(id: string): Promise<void> {
 
   // 2. Try to sync deletion to server database
   try {
-    await fetchWithTimeout(`/api/books/${id}`, {
+    const res = await fetchWithTimeout(`/api/books/${id}`, {
       method: "DELETE"
     });
-  } catch (err) {
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      throw new Error(`服务器响应错误 (${res.status}): ${errText || "无法删除"}`);
+    }
+  } catch (err: any) {
     console.error(`Failed to sync deletion of book ${id} with server:`, err);
+    throw err;
   }
 }
