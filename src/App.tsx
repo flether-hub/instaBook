@@ -2890,7 +2890,7 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[520px] overflow-y-auto pr-0 no-scrollbar">
+                  <div className="space-y-3">
                     {(() => {
                       const sortedLatest = [...localBooks]
                         .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
