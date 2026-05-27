@@ -2868,8 +2868,19 @@ export default function App() {
                 <DryLeavesTitleBarBg />
                 <span className="relative z-10 text-xs font-bold text-amber-950 font-sans tracking-wide pl-1 flex items-center gap-2">
                   <BrandLogo className="w-4 h-4 text-amber-600" />
-                  在当前客户端制作的书籍（只显示最近5本）
+                  本客户端制作的书籍（只显示最近5本）
                 </span>
+                <div className="relative z-10 flex items-center gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.06, y: -0.5 }}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => fileInputRef.current?.click()}
+                    title="导入项目"
+                    className="w-8 h-8 hover:bg-amber-200/50 text-amber-700 bg-amber-100/50 border border-amber-200 hover:border-amber-300 rounded-xl flex items-center justify-center transition-all shadow-sm cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-amber-600 group-hover:text-amber-800" />
+                  </motion.button>
+                </div>
               </div>
 
               <div className="bg-white/30 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-white/30">
@@ -3797,7 +3808,7 @@ export default function App() {
             <p className="text-stone-500 mb-8 leading-relaxed text-xs">
               当前图书尚未全部制作完成。返回首页后，制作将被中断，但内容会
               <strong>暂存在当前浏览器</strong>
-              （“在当前客户端制作的书籍（只显示最近5本）”）中。您可以随时在首页点击一键加载并续写。
+              （“本客户端制作的书籍（只显示最近5本）”）中。您可以随时在首页点击一键加载并续写。
             </p>
             <div className="flex flex-col gap-2.5">
               <button
