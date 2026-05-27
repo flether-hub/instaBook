@@ -239,8 +239,18 @@ export default function App() {
       } catch (err) {}
 
       if (id === currentBookId) {
+        stopGeneration();
         setCurrentBookId("");
         localStorage.removeItem("instabook-currentBookId");
+        setOutline(null);
+        setChaptersContent({});
+        setCompletedChapters([]);
+        setGeneratingChapterIdx(null);
+        setStopRequested(false);
+        stopRef.current = false;
+        localStorage.removeItem("instabook-outline");
+        localStorage.removeItem("instabook-chaptersContent");
+        localStorage.removeItem("instabook-completedChapters");
       }
     } catch (err: any) {
       await showCustomAlert("删除失败", "删除时遇到错误: " + err.message);
@@ -2315,7 +2325,7 @@ export default function App() {
                     <path d="M 44 68 V 73 H 41 V 78 H 47 V 82 H 53 V 78 H 59 V 73 H 56 V 68 Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <h1 className="text-3xl font-mono font-black tracking-widest text-stone-700 select-none flex items-center leading-none mt-1">
+                <h1 className="text-3xl font-mono font-semibold tracking-tight text-stone-850 select-none flex items-center leading-none mt-1">
                   InstaBook
                 </h1>
               </div>
@@ -2468,7 +2478,7 @@ export default function App() {
                 <path d="M 44 68 V 73 H 41 V 78 H 47 V 82 H 53 V 78 H 59 V 73 H 56 V 68 Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
               </svg>
             </motion.div>
-            <h1 className="text-2xl md:text-3xl font-mono font-black tracking-widest text-stone-700 select-none flex items-center leading-none mt-1">
+            <h1 className="text-2xl md:text-3xl font-mono font-semibold tracking-tight text-stone-850 select-none flex items-center leading-none mt-1">
               InstaBook
             </h1>
           </motion.div>
@@ -2858,7 +2868,7 @@ export default function App() {
                 <DryLeavesTitleBarBg />
                 <span className="relative z-10 text-xs font-bold text-amber-950 font-sans tracking-wide pl-1 flex items-center gap-2">
                   <BrandLogo className="w-4 h-4 text-amber-600" />
-                  最近制作的书籍
+                  在当前客户端制作的书籍（只显示最近5本）
                 </span>
                 <div className="relative z-10 flex items-center gap-2">
                   <motion.button
@@ -2938,8 +2948,8 @@ export default function App() {
                               <div className="flex items-center justify-between pt-2 border-t border-stone-100">
                                 <span className="text-[10px] text-stone-450">
                                   {isCompleted
-                                    ? "已研制完成"
-                                    : `进度: ${book.completedCount}/${book.chapterCount}章`}
+                                    ? "已制作完成，持久化存于数据库"
+                                    : `进度: ${book.completedCount}/${book.chapterCount}章 (仅暂存于浏览器缓存)`}
                                 </span>
                                 <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                                   点击观看 <ArrowRight className="w-3" />
@@ -3642,10 +3652,7 @@ export default function App() {
             <h3 className="text-2xl font-bold font-serif mb-2 text-stone-900 text-center">
               下载成书
             </h3>
-            <p
-              className="text-stone-500 mb-8 text-center"
-              style={{ fontFamily: "SimHei" }}
-            >
+            <p className="text-stone-500 text-xs sm:text-sm text-center leading-relaxed tracking-wide px-2 mb-8 font-sans">
               您可以将生成的全部内容以电子书格式下载保存
             </p>
 
@@ -3692,20 +3699,34 @@ export default function App() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-6">
-                <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mb-6" />
-                <div className="w-full bg-stone-100 rounded-full h-2 mb-4 overflow-hidden">
+                <div className="relative w-20 h-20 mb-6 flex items-center justify-center">
+                  {/* Outer glow ring */}
+                  <div className="absolute inset-0 rounded-full border-4 border-stone-100"></div>
+                  {/* Animated spinner ring */}
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500/50 animate-spin"></div>
+                  {/* Percent text center */}
+                  <span className="text-sm font-bold text-stone-750 font-sans">
+                    {Math.round(exportProgress.percent)}%
+                  </span>
+                </div>
+
+                <div className="w-full bg-stone-100 rounded-full h-1.5 mb-4 overflow-hidden shadow-inner">
                   <div
-                    className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
                     style={{ width: `${exportProgress.percent}%` }}
                   ></div>
                 </div>
-                <p className="text-stone-600 font-medium">
+
+                <p className="text-stone-700 text-sm font-semibold tracking-wide flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
                   {exportProgress.text}
                 </p>
-                <p className="text-stone-400 text-sm mt-2 text-center">
-                  生成过程由浏览器合成，可能需要一些时间，
-                  <br />
-                  请保持页面处于前台不要切换。
+
+                <p className="text-stone-400 text-xs mt-4 text-center px-4 leading-relaxed max-w-xs mx-auto">
+                  合成过程在您浏览器本地运行，可能需要一些时间，请保持本页面在最前。
                 </p>
               </div>
             )}
@@ -3787,7 +3808,7 @@ export default function App() {
             <p className="text-stone-500 mb-8 leading-relaxed text-xs">
               当前图书尚未全部制作完成。返回首页后，制作将被中断，但内容会
               <strong>暂存在当前浏览器</strong>
-              （“最近制作的书籍”）中。您可以随时在首页点击一键加载并续写。
+              （“在当前客户端制作的书籍（只显示最近5本）”）中。您可以随时在首页点击一键加载并续写。
             </p>
             <div className="flex flex-col gap-2.5">
               <button
