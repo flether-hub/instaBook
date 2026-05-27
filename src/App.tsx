@@ -17,7 +17,7 @@ import {
   User,
   PenTool,
   Hash,
-  CircleSlash2,
+  PauseCircle,
   Play,
   RefreshCw,
   FileText,
@@ -2765,7 +2765,7 @@ export default function App() {
                     <div className="flex items-center justify-between mb-2 gap-4">
                       <h3 className="text-lg font-bold flex items-center gap-2.5 text-stone-900 min-w-0">
                         {stopRequested ? (
-                          <CircleSlash2 className="w-5 h-5 text-stone-400 shrink-0" />
+                          <PauseCircle className="w-5 h-5 text-stone-400 shrink-0" />
                         ) : (
                           <Loader2 className="w-5 h-5 animate-spin text-emerald-600 shrink-0" />
                         )}
@@ -2793,7 +2793,7 @@ export default function App() {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2.5">
                           {stopRequested ? (
-                            <CircleSlash2 className="w-4 h-4 text-stone-400 shrink-0" />
+                            <PauseCircle className="w-4 h-4 text-stone-400 shrink-0" />
                           ) : (
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
                           )}
@@ -2864,23 +2864,12 @@ export default function App() {
             {/* Right side: Recently Created Books Sidebar Section */}
             <div className="lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print">
               {/* Premium Top Action Row - Highly Polished & Sticky */}
-              <div className="relative z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden">
+              <div className="relative z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden min-h-[62px]">
                 <DryLeavesTitleBarBg />
                 <span className="relative z-10 text-xs font-bold text-amber-950 font-sans tracking-wide pl-1 flex items-center gap-2">
                   <BrandLogo className="w-4 h-4 text-amber-600" />
                   在当前客户端制作的书籍（只显示最近5本）
                 </span>
-                <div className="relative z-10 flex items-center gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.06, y: -0.5 }}
-                    whileTap={{ scale: 0.94 }}
-                    onClick={() => fileInputRef.current?.click()}
-                    title="导入项目"
-                    className="w-8 h-8 hover:bg-amber-200/50 text-amber-700 bg-amber-100/50 border border-amber-200 hover:border-amber-300 rounded-xl flex items-center justify-center transition-all shadow-sm cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5 text-amber-600 group-hover:text-amber-800" />
-                  </motion.button>
-                </div>
               </div>
 
               <div className="bg-white/30 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-white/30">
@@ -3373,7 +3362,7 @@ export default function App() {
                       全书完
                     </p>
                     <p className="mt-8 text-sm text-stone-400 font-sans tracking-wide">
-                      本著作由InstaBook瞬书强力驱动生成，仅供个人阅读品鉴。
+                      本著作由InstaBook瞬书强力驱动生成，仅供个人阅读品鉴
                     </p>
                     <p className="mt-2 text-xs text-stone-400/80 font-sans tracking-wide">
                       Copyright @InstaBook
@@ -3386,7 +3375,7 @@ export default function App() {
             {/* Right side: Sidebar (visible only on screen, hidden on prints) */}
             <div className={`lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print animate-fade-in animate-duration-350 lg:overflow-y-auto lg:pb-8 custom-scrollbar lg:pr-2 ${mobileWorkTab === "control" ? "block" : "hidden lg:block"}`}>
               {/* Premium Top Action Row - Highly Polished & Sticky */}
-              <div className="sticky top-0 z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden">
+              <div className="sticky top-0 z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden min-h-[62px]">
                 <DryLeavesTitleBarBg />
                 <span className="relative z-10 text-xs font-bold text-amber-950 font-sans tracking-wide pl-1 flex items-center gap-2 shrink-0 whitespace-nowrap">
                   <BrandLogo className="w-4 h-4 text-amber-600 shrink-0" />
@@ -3468,7 +3457,7 @@ export default function App() {
                       </>
                     ) : (
                       <>
-                        <CircleSlash2 className="w-5 h-5 text-stone-400 shrink-0" />
+                        <PauseCircle className="w-5 h-5 text-stone-400 shrink-0" />
                         <span className="truncate">生成已中止</span>
                       </>
                     )}
