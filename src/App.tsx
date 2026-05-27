@@ -2544,7 +2544,7 @@ export default function App() {
       </header>
 
       {!outline && (
-        <div className="max-w-7xl w-full mx-auto px-4 md:px-6 pt-1 md:pt-2 pb-6 md:pb-8 no-print font-sans flex-grow flex flex-col h-full">
+        <div className="max-w-7xl w-full mx-auto px-4 md:px-6 pt-4 pb-6 md:pb-8 no-print font-sans flex-grow flex flex-col">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-stretch w-full flex-grow">
             {/* Left side: Book Creator Form Column */}
             <div
@@ -2860,7 +2860,7 @@ export default function App() {
             </div>
 
             {/* Right side: Recently Created Books Sidebar Section */}
-            <div className="lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print">
+            <div className="lg:col-span-4 lg:gap-4 lg:space-y-4 space-y-4 no-print">
               {/* Premium Top Action Row - Highly Polished & Sticky */}
               <div className="relative z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden min-h-[62px]">
                 <DryLeavesTitleBarBg />
