@@ -2554,10 +2554,8 @@ export default function App() {
                 <h2 className="text-3xl md:text-3.5xl lg:text-4xl font-serif font-bold mb-2 md:mb-3 tracking-tight text-stone-900 leading-tight">
                   瞬间创作完整书籍
                 </h2>
-                <p className="text-sm md:text-base text-stone-500 mb-4 max-w-xl leading-relaxed">
-                  只需输入书名或主题，AI
-                  将为您生成包含完整目录、正文章节、封面及出版信息的标准 A5
-                  (148x210mm) 图书。
+                <p className="text-sm md:text-base text-stone-500 mb-4 w-full leading-relaxed text-justify">
+                  只需输入书名或设定主题，AI 强大的创造力即可为您一键生成包含完整目录结构、丰富正文章节、精美专属封面，以及专业出版信息的标准 A5 (148x210mm) 排版图书。
                 </p>
 
                 {!isGeneratingOutline ? (
@@ -2892,7 +2890,7 @@ export default function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-[520px] overflow-y-auto pr-0 no-scrollbar">
                     {(() => {
                       const sortedLatest = [...localBooks]
                         .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
@@ -3384,7 +3382,7 @@ export default function App() {
             </div>
 
             {/* Right side: Sidebar (visible only on screen, hidden on prints) */}
-            <div className={`lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print animate-fade-in animate-duration-350 lg:overflow-y-auto lg:pb-8 custom-scrollbar lg:pr-2 ${mobileWorkTab === "control" ? "block" : "hidden lg:block"}`}>
+            <div className={`lg:col-span-4 lg:h-full lg:gap-4 lg:space-y-4 space-y-4 no-print animate-fade-in animate-duration-350 lg:overflow-y-auto lg:pb-8 no-scrollbar lg:pr-0 ${mobileWorkTab === "control" ? "block" : "hidden lg:block"}`}>
               {/* Premium Top Action Row - Highly Polished & Sticky */}
               <div className="sticky top-0 z-20 bg-amber-50/90 backdrop-blur-xl rounded-xl p-3 px-4 border border-amber-200/60 shadow-md flex items-center justify-between gap-3 select-none overflow-hidden min-h-[62px]">
                 <DryLeavesTitleBarBg />
